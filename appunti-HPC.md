@@ -5,20 +5,29 @@
 Utilizzare sempre l’indirizzo IP `158.110.146.245` e connettersi usando il comando:
 
 ```bash
-ssh tuo_username@158.110.146.245
+ssh <tuo_username>@158.110.146.245
 ```
 
 Su Windows, per abilitare la connessione ssh senza password:
 
 ```bash
 ssh-keygen -t rsa
-type $env:USERPROFILE\.ssh\id_rsa.pub | ssh tuo_username@158.110.146.245 "cat >> .ssh/authorized_keys"
+type $env:USERPROFILE\.ssh\id_rsa.pub | ssh <tuo_username>@158.110.146.245 "cat >> .ssh/authorized_keys"
 ```
 
 Su linux o Mac si può usare il comando:
 
 ```bash
-ssh-copy-id tuo_username@158.110.146.245
+ssh-copy-id <tuo_username>@158.110.146.245
+```
+
+Nel file `~/.ssh/config` aggiungi:
+
+```
+Host dgx-login
+  HostName 158.110.146.245
+  User <tuo_username>
+  IdentityFile ~/.ssh/id_rsa
 ```
 
 ## Utilizzo di SLURM
