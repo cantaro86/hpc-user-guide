@@ -72,47 +72,25 @@ L’output che otteniamo è:
 
 Questo perché abbiamo 4 processi paralleli e in ogni nodo pytorch vede 2 GPU.
 
-Una volta finito di lavorare, è necessario liberare lo spazio allocato con il comando `scancel` seguito dal `JOBID`.
+Una volta finito di lavorare, può essere necessario liberare lo spazio allocato con il comando `scancel` seguito dal `JOBID`.
 
 ```bash
 scancel $SLURM_JOB_ID
 ```
 
-## IMPORTANTE: ssh VS srun --pty /bin/bash -i
+## salloc VS ssh
 
-Una volta allocato un nodo con `salloc`, è possibile connettersi a quest’ultimo via ssh.  
-
-⚠  Utilizzare ssh solo per fini di debug. Non utilizzare applicazioni direttamente sul nodo perché non vengono gestite da slurm. Bisogna sempre usare `srun`.
-
-Se volete lavorare sul nodo potete utilizzare:
-
+Con il comando
 ```bash
-salloc -N 1 --time=00:15:00 --gres=gpu:1 --job-name="bash"
-srun --pty /bin/bash -i
+salloc
 ```
+ci si connette direttamente al nodo allocato. Usando il comando `salloc -N 2` ci si connette al primo nodo (nel nostro caso alla `dgx01`).    
+Usare `salloc` è meglio di usare `srun --pty /bin/bash` perchè ti permette di lanciare ripetuti `srun` all'interno dell'allocazione.
 
-Oppure direttamente:
+Una volta allocato un nodo con `salloc`, è possibile connettersi a quest’ultimo da un altro terminale via `ssh`.  
 
-```bash
-salloc -N 1 --time=00:15:00 --gres=gpu:1 --job-name="bash" srun --pty /bin/bash -i
-```
+⚠  Utilizzare ssh solo per fini di debug. Non utilizzare applicazioni direttamente sul nodo perché non vengono gestite da slurm. Bisogna sempre usare `srun` per lanciare dei job.
 
-Scrivendo tutto in una linea, quando si esce dal nodo (con il comando `exit`) non è necessario usare `scancel`.
-
-## Consigliato:
-
-Il comando `salloc` genera delle variabili ambiente di SLURM che non scompaiono dopo aver fatto `scancel`.
-
-Non è necessario eliminarle, ma potrebbe essere utile in certi casi.
-
-Per farlo è possibile ridefinire `scancel` localmente. Aggiungi il seguente codice alla fine del file `~/.bashrc`:
-
-```bash
-scancel() {
-    command scancel "$@"
-    unset $(env | grep ^SLURM_ | grep -v ^SLURM_CONF= | cut -d= -f1)
-}
-```
 
 ## ANACONDA e PYTORCH
 
@@ -122,13 +100,13 @@ Per utilizzare anaconda è necessario caricare il modulo appropriato:
 module load conda
 ```
 
-Per vedere gli ambienti virtuali esistenti:
+Per vedere gli ambienti virtuali esistenti usate:
 
 ```bash
 conda env list
 ```
 
-Al momento esistono due virtual environment di sistema (`base` e `pytorch-2.5.1`). Non utilizzate `base`. L’ambiente `pytorch-2.5.1` contiene i principali pacchetti necessari per lavorare. Per aggiungere pacchetti a questo ambiente contattate gli amministratori di sistema. 
+Al momento esistono diversi virtual environment di sistema (`base`, `sglang`, `pytorch-2.5.1` e `ultralytics`). Non utilizzate `base`. L’ambiente `pytorch-2.5.1` contiene i principali pacchetti necessari per lavorare con python 3.12. L'ambiente `ultralytics` usa python 3.11.  Per aggiungere pacchetti ad un ambiente contattate gli amministratori di sistema. 
 
 Altrimenti è possibile creare ambienti locali utilizzando il comando:
 
@@ -136,19 +114,20 @@ Altrimenti è possibile creare ambienti locali utilizzando il comando:
 conda create -n environment1 python=3.12
 ```
 
-È consigliato utilizzare gli ambienti di sistema per evitare occupare troppo spazio (ogni ambiente con pytorch occupa diversi GB).
+È consigliato utilizzare gli ambienti di sistema per evitare di occupare troppo spazio (ogni ambiente con pytorch occupa diversi GB).
 
 ### Modulo di Pytorch
 
-In alternativa, è possibile usare il seguente modulo:
+In alternativa, è possibile usare i moduli:
 
 ```bash
 module load pytorch-conda
 ```
 
 Questo modulo utilizza lo stesso ambiente virtuale `pytorch-2.5.1` di anaconda. 
+I moduli basati su ambienti virtuali di anaconda seguono una nomenclatura del tipo `<nome_ambiente>-conda`.
 
-Usando il modulo, non è necessario attivare l’ambiente virtuale.
+Usando il modulo, NON è necessario attivare l’ambiente virtuale con `conda activate <nome_ambiente>`.
 
 ### ESEMPIO 1 (conda environment):
 
@@ -173,6 +152,19 @@ python
 >>> exit()
 ```
 
+### Attivare un ambiente conda in uno script sbatch
+
+All'interno di uno script `sbatch` è più semplice attivare un ambiente conda caricando il modulo corrispondente, e.g. con `module load pytorch-conda`.
+
+Nel caso in cui si voglia caricare un ambiente per cui il modulo associato non esiste, bisogna fare così:
+
+```
+module load conda
+eval "$(conda shell.bash hook)"
+conda activate <ambiente_locale>
+```
+
+Il comando con `eval` serve per inizializzare Conda nella shell bash e poter attivare gli ambienti.  
 
 ## JUPYTER
 
