@@ -164,7 +164,7 @@ and the module you already loaded with
 ```
 module list
 ```
-If you want to remove all the modules, you can run a `module purge`.
+If you want to unload all the modules, you can run a `module purge`.
 
 When using the module, it is NOT necessary to activate the virtual environment with    
 `conda activate <environment_name>`.
