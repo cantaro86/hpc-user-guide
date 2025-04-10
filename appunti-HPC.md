@@ -154,7 +154,17 @@ This module uses the same `pytorch-2.5.1` virtual environment as Anaconda.
 Modules based on Anaconda virtual environments follow a naming convention of the type `<environment_name>-conda`.
 
 This means that at the moment there are the following modules:
-`pytorch-conda`, `sglang-conda`, `ultralytics-conda`. 
+`pytorch-conda`, `sglang-conda`, `ultralytics-conda`.    
+You can list all the available modules with
+
+```
+module avail
+```
+and the module you already loaded with
+```
+module list
+```
+If you want to remove all the modules, you can run a `module purge`.
 
 When using the module, it is NOT necessary to activate the virtual environment with    
 `conda activate <environment_name>`.
