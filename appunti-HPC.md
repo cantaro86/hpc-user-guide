@@ -1,67 +1,91 @@
-# Appunti di HPC
+# HPC Notes
 
-## Connessione via SSH
+## Table of Contents
 
-Utilizzare sempre l’indirizzo IP `158.110.146.245` e connettersi usando il comando:
+1. [Connecting via SSH](#connecting-via-ssh)
+   - [Configuration on Windows](#configuration-on-windows)
+   - [Configuration on Linux or Mac](#configuration-on-linux-or-mac)
+   - [Configuration of the ~/.ssh/config file](#configuration-of-the-sshconfig-file)
+
+2. [Using SLURM](#using-slurm)
+   - [Allocation Example](#allocation-example)
+   - [View Active Allocations](#view-active-allocations)
+   - [Freeing Allocations](#freeing-allocations)
+   - [salloc VS ssh](#salloc-vs-ssh)
+
+3. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
+   - [Loading Modules and Environments](#loading-modules-and-environments)
+   - [Example 1: Conda Environment](#example-1-conda-environment)
+   - [Example 2: Module](#example-2-module)
+   - [Activating a Conda Environment in an sbatch Script](#activating-a-conda-environment-in-an-sbatch-script)
+
+4. [JUPYTER](#jupyter)
+   - [Jupyter Configuration](#jupyter-configuration)
+   - [Jupyter Script](#jupyter-script)
+
+5. [Module for using HPC tools](#module-for-using-hpc-tools)
+
+## Connecting via SSH
+
+Always use the IP address `158.110.146.245` and connect using the command:
 
 ```bash
-ssh <tuo_username>@158.110.146.245
+ssh <your_username>@158.110.146.245
 ```
 
-Su Windows, per abilitare la connessione ssh senza password:
+On Windows, to enable passwordless SSH connection:
 
 ```bash
 ssh-keygen -t rsa
-type $env:USERPROFILE\.ssh\id_rsa.pub | ssh <tuo_username>@158.110.146.245 "cat >> .ssh/authorized_keys"
+type $env:USERPROFILE\.ssh\id_rsa.pub | ssh <your_username>@158.110.146.245 "cat >> .ssh/authorized_keys"
 ```
 
-Su linux o Mac si può usare il comando:
+On Linux or Mac, you can use the command:
 
 ```bash
-ssh-copy-id <tuo_username>@158.110.146.245
+ssh-copy-id <your_username>@158.110.146.245
 ```
 
-Nel file `~/.ssh/config` aggiungi:
+In the `~/.ssh/config` file, add:
 
 ```
 Host dgx-login
   HostName 158.110.146.245
-  User <tuo_username>
+  User <your_username>
   IdentityFile ~/.ssh/id_rsa
 ```
 
-## Utilizzo di SLURM
+## Using SLURM
 
-Utilizzare sempre i comandi SLURM: `salloc` e `srun`:
+Always use the SLURM commands: `salloc` and `srun`:
 
-- `salloc` serve per allocare risorse
+- `salloc` is used to allocate resources.
+- `srun` is used to launch jobs.
 
-- `srun` per lanciare dei jobs
+It is good practice to first use `salloc` with all the parameters for allocation and then `srun` to launch the jobs.
 
-È buona pratica usare prima `salloc` con tutti i parametri per l’allocazione e poi `srun` per lanciare i jobs.
-
-ESEMPIO:
+EXAMPLE:
 
 ```bash
 salloc --nodes=2 --ntasks=4 --time=00:15:00 --gres=gpu:2 --job-name="device_count"
 ```
 
-Il comando precedente serve a riservare 2 nodi. Sui nodi riservati stiamo richiedendo anche 4 processi paralleli (`ntasks=4`) in totale, ovvero 2 processi per nodo. In ogni nodo richiediamo 2 GPU, quindi 4 in totale. 
+The previous command reserves 2 nodes. On the reserved nodes, we are also requesting 4 parallel processes (`ntasks=4`) in total, i.e., 2 processes per node. In each node, we request 2 GPUs, so 4 in total.
 
-Le informazioni per questa allocazione si possono vedere con `squeue`:
+The information for this allocation can be viewed with `squeue`:
 
 ```bash
 squeue -u $USER
 ```
 
-Ora proviamo a vedere quante GPU vede pytorch:
+Now let's see how many GPUs PyTorch sees:
 
 ```bash
 module load pytorch-conda
 srun python -c "import torch; print(torch.cuda.device_count())"
 ```
 
-L’output che otteniamo è:
+The output we get is:
 
 ```
 2
@@ -70,9 +94,11 @@ L’output che otteniamo è:
 2
 ```
 
-Questo perché abbiamo 4 processi paralleli e in ogni nodo pytorch vede 2 GPU.
+This is because we have 4 parallel processes, and in each node, PyTorch sees 2 GPUs.
 
-Una volta finito di lavorare, può essere necessario liberare lo spazio allocato con il comando `scancel` seguito dal `JOBID`.
+Once you have finished working, it may be necessary to free the allocated space.    
+If you allocated with `salloc`, you can simply type `exit`. 
+If you used a `sbatch` script ([example below](#jupyter-script)), you can kill your allocation with the command `scancel` followed by the `JOBID`.
 
 ```bash
 scancel $SLURM_JOB_ID
@@ -80,59 +106,63 @@ scancel $SLURM_JOB_ID
 
 ## salloc VS ssh
 
-Con il comando
+With the command `salloc` you connect directly to the allocated node.    
+Using the command
 ```bash
-salloc
+salloc -N 2
 ```
-ci si connette direttamente al nodo allocato. Usando il comando `salloc -N 2` ci si connette al primo nodo (nel nostro caso alla `dgx01`).    
-Usare `salloc` è meglio di usare `srun --pty /bin/bash` perchè ti permette di lanciare ripetuti `srun` all'interno dell'allocazione.
+you allocate two nodes, but the login is into the first node (in our case to `dgx01`).   
+Using `salloc` is better than using `srun --pty /bin/bash` because it allows you to launch repeated `srun` commands within the allocation.
 
-Una volta allocato un nodo con `salloc`, è possibile connettersi a quest’ultimo da un altro terminale via `ssh`.  
+Once a node is allocated with `salloc` or by submitting a `sbatch` script, it is possible to connect to it from another terminal via `ssh`.
 
-⚠  Utilizzare ssh solo per fini di debug. Non utilizzare applicazioni direttamente sul nodo perché non vengono gestite da slurm. Bisogna sempre usare `srun` per lanciare dei job.
+⚠ Use SSH only for debugging purposes. Do not use applications directly on the node because they are not managed by SLURM. You should always use `srun` to launch jobs.
 
+## ANACONDA and PYTORCH
 
-## ANACONDA e PYTORCH
-
-Per utilizzare anaconda è necessario caricare il modulo appropriato:
+To use Anaconda, you need to load the appropriate module:
 
 ```bash
 module load conda
 ```
 
-Per vedere gli ambienti virtuali esistenti usate:
+To see the existing virtual environments, use:
 
 ```bash
 conda env list
 ```
 
-Al momento esistono diversi virtual environment di sistema (`base`, `sglang`, `pytorch-2.5.1` e `ultralytics`). Non utilizzate `base`. L’ambiente `pytorch-2.5.1` contiene i principali pacchetti necessari per lavorare con python 3.12. L'ambiente `ultralytics` usa python 3.11.  Per aggiungere pacchetti ad un ambiente contattate gli amministratori di sistema. 
+Currently, there are several system virtual environments (`base`, `sglang`, `pytorch-2.5.1`, and `ultralytics`). Do not use `base`. The `pytorch-2.5.1` environment contains the main packages needed to work with Python 3.12. The `ultralytics` environment uses Python 3.11. To add packages to an environment, contact the system administrators.
 
-Altrimenti è possibile creare ambienti locali utilizzando il comando:
+Alternatively, you can create local environments using the command:
 
 ```bash
 conda create -n environment1 python=3.12
 ```
 
-È consigliato utilizzare gli ambienti di sistema per evitare di occupare troppo spazio (ogni ambiente con pytorch occupa diversi GB).
+It is recommended to use the system environments to avoid taking up too much space (each environment with PyTorch occupies several GB).
 
-### Modulo di Pytorch
+### PyTorch Module
 
-In alternativa, è possibile usare i moduli:
+Alternatively, you can use modules:
 
 ```bash
 module load pytorch-conda
 ```
 
-Questo modulo utilizza lo stesso ambiente virtuale `pytorch-2.5.1` di anaconda. 
-I moduli basati su ambienti virtuali di anaconda seguono una nomenclatura del tipo `<nome_ambiente>-conda`.
+This module uses the same `pytorch-2.5.1` virtual environment as Anaconda.      
+Modules based on Anaconda virtual environments follow a naming convention of the type `<environment_name>-conda`.
 
-Usando il modulo, NON è necessario attivare l’ambiente virtuale con `conda activate <nome_ambiente>`.
+This means that at the moment there are the following modules:
+`pytorch-conda`, `sglang-conda`, `ultralytics-conda`. 
 
-### ESEMPIO 1 (conda environment):
+When using the module, it is NOT necessary to activate the virtual environment with    
+`conda activate <environment_name>`.
+
+### EXAMPLE 1 (conda environment):
 
 ```bash
-salloc -N 1 --time=00:15:00 --gres=gpu:1 --job-name="torch_test" srun --pty /bin/bash -i
+salloc -N 1 --time=00:15:00 --gres=gpu:1 --job-name="torch_test"
 module load conda
 conda activate pytorch-2.5.1
 python
@@ -141,10 +171,10 @@ python
 >>> exit()
 ```
 
-### ESEMPIO 2 (modulo):
+### EXAMPLE 2 (module):
 
 ```bash
-salloc -N 1 --time=00:15:00 --gres=gpu:3 --job-name="torch_test" srun --pty /bin/bash -i
+salloc -N 1 --time=00:15:00 --gres=gpu:3 --job-name="torch_test"
 module load pytorch-conda
 python
 >>> import torch
@@ -152,48 +182,48 @@ python
 >>> exit()
 ```
 
-### Attivare un ambiente conda in uno script sbatch
+### Activating a Conda Environment in an sbatch Script
 
-All'interno di uno script `sbatch` è più semplice attivare un ambiente conda caricando il modulo corrispondente, e.g. con `module load pytorch-conda`.
+Within an `sbatch` script, it is easier to activate a Conda environment by loading the corresponding module, e.g., with `module load pytorch-conda`.
 
-Nel caso in cui si voglia caricare un ambiente per cui il modulo associato non esiste, bisogna fare così:
+If you want to load an environment for which the associated module does not exist, you need to do this:
 
 ```
 module load conda
 eval "$(conda shell.bash hook)"
-conda activate <ambiente_locale>
+conda activate <local_environment>
 ```
 
-Il comando con `eval` serve per inizializzare Conda nella shell bash e poter attivare gli ambienti.  
+The command with `eval` is used to initialize Conda in the bash shell and be able to activate the environments.
 
 ## JUPYTER
 
-Il pacchetto di jupyter è installato nell’ambiente conda `pytorch-2.5.1`.
+The Jupyter package is installed in the `pytorch-2.5.1` Conda environment.
 
-Crea un file di testo e chiamalo `jupyter.sbatch`. Incolla al suo interno lo script in fondo al paragrafo.
+Create a text file and name it `jupyter.sbatch`. Paste the script at the bottom of the paragraph inside it.
 
-Lancia lo script e apri il log file generato.
+Launch the script and open the generated log file.
 
 ```bash
 sbatch jupyter.sbatch
 less jupyter-notebook.log
 ```
 
-Nel log file c’è il comando ssh che dovrai lanciare sulla tua macchina locale e l’URL da inserire nel browser.
+In the log file, there is the SSH command that you will have to launch on your local machine and the URL to enter in the browser.
 
-Apri un terminale sulla tua macchina locale e mantienilo aperto finché usi jupyter. Il comando da lanciare sarà simile a  
+Open a terminal on your local machine and keep it open while you use Jupyter. The command to launch will be similar to
 
 ```bash
-ssh -N -f -L 8892:<compute_node>:8892 <tuo_username>@158.110.146.245
+ssh -N -f -L 8892:<compute_node>:8892 <your_username>@158.110.146.245
 ```
 
-L’URL da inserire nel browser sarà simile a:
+The URL to enter in the browser will be similar to:
 
 ```
 http://127.0.0.1:8892/lab?token=0a61901842c346fb6fa059a74ae4a0dd86f88d6217e22780
 ```
 
-### Script Jupyter
+### Jupyter Script
 
 ```bash
 #!/bin/bash
@@ -224,4 +254,27 @@ Use a Browser on your local machine and paste the address in the output below:
 
 # Run Jupyter
 jupyter-lab --no-browser --port=${port} --ip=${node}
+```
+
+## Module for using HPC tools
+
+If you need to use libraries for HPC software development, mainly in C++ and Python, load the following module:
+
+```
+module load hpc-tools
+```
+
+It contains the latest versions of the main HPC tools:
+
+- gcc-14, cmake-3.31.6, openmpi-5.0.7, openmp, ninja, Eigen3, Boost
+- Cuda-12.8
+- HWLOC, PMIx, Libevent, and UCX.
+- python-12.9
+
+With these libraries, it is possible to write multi-node and multi-GPU code, making GPUs communicate between different nodes.
+
+For the HPC libraries of CUDA (NVIDIA HPC SDK), use the module:
+
+```
+module load nvhpc
 ```
