@@ -25,7 +25,9 @@
 
 5. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
 
-6. [Tips](#tips)
+6. [Singularity](#singularity)
+
+7. [Tips](#tips)
 
 
 ## Connecting via SSH
@@ -305,6 +307,73 @@ For the HPC libraries of CUDA (NVIDIA HPC SDK), use the module:
 ```bash
 module load nvhpc
 ```
+
+
+## Singularity
+
+If you need to run a container you can do it with Singularity.     
+Singularity let's you run Docker and Singularity containers.  
+
+
+### Interactive approach
+
+Here I show a simple example with a pytorch container:
+
+```bash
+module load slurm
+module load singularity
+
+singularity pull pytorch_2.7.0-cuda12.8.sif docker://pytorch/pytorch:2.7.0-cuda12.8-cudnn9-runtime
+
+salloc --nodes=1 --ntasks=1 --gpus-per-node=2 --time=00:05:00
+singularity shell --nv pytorch_2.7.0-cuda12.8-cudnn9-runtime.sif
+
+Singularity> python
+>>> import torch 
+>>> print(torch.cuda.device_count())
+2
+>>> exit()
+Singularity> exit
+exit
+```
+
+First we load the slurm and singularity modules.
+Then we pull the pytorch docker image from the [docker hub](https://hub.docker.com/r/pytorch/pytorch/tags).
+The docker image is converted into a SIF file (singularity image format), and is saved in your current directory.     
+Now we can allocate GPUs with salloc, and run the *singularity shell*.  
+Inside the container, we can run python, import pytorch and verify the number of reserved GPUs.
+
+
+### Sbatch file
+
+If we need to run a sbatch process, we can create the script `run_pytorch_test.sbatch`:  
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=pytorch_test
+#SBATCH --nodes=1
+#SBATCH --gres=gpu:2
+#SBATCH --time=00:05:00
+#SBATCH --output=pytorch_test.log
+
+
+module load singularity
+
+IMAGE="pytorch_2.7.0-cuda12.8.sif"
+
+srun singularity exec --nv $IMAGE python ../cuda_checker.py
+```
+
+where the command `srun`, runs the python script inside the container. The IMAGE must be downloaded with `singularity pull` as done before.       
+The file `cuda_checker.py` is
+
+```python
+import torch
+
+device_count = torch.cuda.device_count()
+print(f"Found {device_count} GPU(s)")
+``` 
+
 
 
 ## Tips
