@@ -23,7 +23,10 @@
    - [Jupyter Configuration](#jupyter-configuration)
    - [Jupyter Script](#jupyter-script)
 
-5. [Module for using HPC tools](#module-for-using-hpc-tools)
+5. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
+
+6. [Tips](#tips)
+
 
 ## Connecting via SSH
 
@@ -266,11 +269,13 @@ Use a Browser on your local machine and paste the address in the output below:
 jupyter-lab --no-browser --port=${port} --ip=${node}
 ```
 
-## Module for using HPC tools
+## Other modules for HPC and pytorch
+
+### hpc-tools
 
 If you need to use libraries for HPC software development, mainly in C++ and Python, load the following module:
 
-```
+```bash
 module load hpc-tools
 ```
 
@@ -283,8 +288,44 @@ It contains the latest versions of the main HPC tools:
 
 With these libraries, it is possible to write multi-node and multi-GPU code, making GPUs communicate between different nodes.
 
+### pytorch 2.7.0
+
+With a simple
+```bash
+module load pytorch
+```
+we can load pytorch 2.7.0. This module depends on *hpc-tools*, so it uses CUDA 12.8 and python 3.12.
+This module is not conda based. It does not create a virtual environment, but simply adds pytorch to the PYTHONPATH. 
+
+
+### HPC CUDA libraries
+
 For the HPC libraries of CUDA (NVIDIA HPC SDK), use the module:
 
-```
+```bash
 module load nvhpc
 ```
+
+
+## Tips
+
+### vscode_clean
+If you are using the VS-Code extension *"Remote explorer"*, you may have noticed that sometimes there are problems.
+A practical way to fix the problems is to kill the VS-Code processes on the login node.
+
+In *~/.bash_aliases* define:
+
+```bash
+alias vscode_show='ps aux | grep $(whoami) | grep vscode | grep -v grep'
+alias vscode_clean='kill $(vscode_show | sed "s/ \+/ /g" | cut -d" " -f2) 2>/dev/null'
+```
+
+You can run *vscode_clean* to kill the processes.
+
+### ssqueue
+
+```bash
+alias ssqueue='squeue -o "%i %u %P %T %b %D %C %m %N"'
+```
+
+With this command we can see how many GPUs are being used.
