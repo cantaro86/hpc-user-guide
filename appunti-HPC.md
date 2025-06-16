@@ -123,6 +123,41 @@ Once a node is allocated with `salloc` or by submitting a `sbatch` script, it is
 
 ⚠ Use SSH only for debugging purposes. Do not use applications directly on the node because they are not managed by SLURM. You should always use `srun` to launch jobs.
 
+
+## QOS (unlock more GPUs)
+
+In the cluster, we use **Quality of Service (QOS)** to allow users to access resources related to their project.    
+You can see the list of qos with the command:
+
+```bash
+sacctmgr show qos
+```
+
+In order to see which qos you can use, run:
+
+```bash
+sacctmgr show assoc where user=$USER
+```
+
+By default, each user can access *normal* QOS, which allows them to request up to 2 GPUs.
+The *mira* QOS on the other hand has no restrictions on the number of GPUs.
+
+Let's see an example:
+
+If you request for instance 3 GPUs with `salloc --gpus=3`. The request will be denied.    
+Only if your account belongs to the *mira* project, you can add the option `--qos=mira` and request more GPUs: 
+
+```bash
+salloc --qos=mira --gpus=3
+```
+
+If you are using a sbatch script, just add the following line at the beginning of the script:
+
+```bash
+#SBATCH --qos=mira
+```
+
+
 ## ANACONDA and PYTORCH
 
 To use Anaconda, you need to load the appropriate module:
@@ -137,7 +172,9 @@ To see the existing virtual environments, use:
 conda env list
 ```
 
-Currently, there are several system virtual environments (`base`, `sglang`, `pytorch-2.5.1`, and `ultralytics`). Do not use `base`. The `pytorch-2.5.1` environment contains the main packages needed to work with Python 3.12. The `ultralytics` environment uses Python 3.11. To add packages to an environment, contact the system administrators.
+Currently, there are several system virtual environments (`base`, `pytorch-2.5.1`, and `ultralytics`).    
+Do **not** use `base`.     
+The `pytorch-2.5.1` environment contains the main packages needed to work with Python 3.12. The `ultralytics` environment uses Python 3.11. To add packages to an environment, contact the system administrators.
 
 Alternatively, you can create local environments using the command:
 
@@ -146,6 +183,13 @@ conda create -n environment1 python=3.12
 ```
 
 It is recommended to use the system environments to avoid taking up too much space (each environment with PyTorch occupies several GB).
+
+You can remove a local conda environment with: 
+
+```bash
+conda remove -n environment1 --all
+```
+
 
 ### PyTorch Module
 
@@ -158,8 +202,9 @@ module load pytorch-conda
 This module uses the same `pytorch-2.5.1` virtual environment as Anaconda.      
 Modules based on Anaconda virtual environments follow a naming convention of the type `<environment_name>-conda`.
 
-This means that at the moment there are the following modules:
-`pytorch-conda`, `sglang-conda`, `ultralytics-conda`.    
+This means that at the moment there are the following modules:    
+`pytorch-conda`, `ultralytics-conda`.      
+
 You can list all the available modules with
 
 ```
@@ -189,7 +234,7 @@ python
 ### EXAMPLE 2 (module):
 
 ```bash
-salloc -N 1 --time=00:15:00 --gres=gpu:3 --job-name="torch_test"
+salloc -N 1 --time=00:15:00 --qos=mira --gres=gpu:3 --job-name="torch_test"
 module load pytorch-conda
 python
 >>> import torch
