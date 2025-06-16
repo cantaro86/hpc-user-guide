@@ -12,6 +12,7 @@
    - [View Active Allocations](#view-active-allocations)
    - [Freeing Allocations](#freeing-allocations)
    - [salloc VS ssh](#salloc-vs-ssh)
+   - [QOS (unlock more GPUs)](#qos-unlock-more-gpus)
 
 3. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
    - [Loading Modules and Environments](#loading-modules-and-environments)
