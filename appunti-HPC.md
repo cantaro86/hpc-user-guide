@@ -73,10 +73,10 @@ It is good practice to first use `salloc` with all the parameters for allocation
 EXAMPLE:
 
 ```bash
-salloc --nodes=2 --ntasks=4 --time=00:15:00 --gres=gpu:2 --job-name="device_count"
+salloc --nodes=2 --ntasks=4 --time=00:15:00 --gres=gpu:1 --job-name="device_count"
 ```
 
-The previous command reserves 2 nodes. On the reserved nodes, we are also requesting 4 parallel processes (`ntasks=4`) in total, i.e., 2 processes per node. In each node, we request 2 GPUs, so 4 in total.
+The previous command reserves 2 nodes. On the reserved nodes, we are also requesting 4 parallel processes (`ntasks=4`) in total, i.e., 2 processes per node. In each node, we request 1 GPUs, so 2 in total.
 
 The information for this allocation can be viewed with `squeue`:
 
@@ -84,23 +84,29 @@ The information for this allocation can be viewed with `squeue`:
 squeue -u $USER
 ```
 
+To see all the allocated resources use simply
+
+```bash
+squeue
+```
+
 Now let's see how many GPUs PyTorch sees:
 
 ```bash
-module load pytorch-conda
+module load pytorch
 srun python -c "import torch; print(torch.cuda.device_count())"
 ```
 
 The output we get is:
 
 ```
-2
-2
-2
-2
+1
+1
+1
+1
 ```
 
-This is because we have 4 parallel processes, and in each node, PyTorch sees 2 GPUs.
+This is because we have 4 parallel processes, and in each node, PyTorch sees 1 GPUs.
 
 Once you have finished working, it may be necessary to free the allocated space.    
 If you allocated with `salloc`, you can simply type `exit`. 
@@ -444,3 +450,15 @@ alias ssqueue='squeue -o "%i %u %P %T %b %D %C %m %N"'
 ```
 
 With this command we can see how many GPUs are being used.
+
+### VScode create venv
+
+If you want to create a virtual environment on top of a module, **do not** use VScode, but use the command line.
+
+For example:
+```bash
+module load pytorch
+python -m venv --prompt the_name_you_like ${PWD}/python-venv
+source ${PWD}/python-venv/bin/activate
+which python
+```
