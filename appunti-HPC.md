@@ -30,6 +30,8 @@
 
 7. [Tips](#tips)
 
+8. [Debugging](#debug-python-program-on-the-compute-node-with-vs-code)
+
 
 ## Connecting via SSH
 
@@ -468,7 +470,7 @@ If you do it in reverse order, there may be bugs.
 
 
 
-## Debug python program on the compute node with VS-code
+## Debug python program on the compute node with VS Code
 
 Debugging a python program that runs on a compute node is not straightforward.
 You need the following things:    
@@ -520,7 +522,7 @@ python -m venv --prompt the_name_you_like ${PWD}/python-venv
 source ${PWD}/python-venv/bin/activate
 ```
 
-An alternative would be to create and activate a conda environment.
+An alternative would be to create and activate a conda environment. Or to use the system environments: `pytorch-2.5.1` or `ultralytics`.
 
 **If you already have an existing virtual environment, skip this point.**
 
