@@ -514,7 +514,7 @@ We can debug the program `cuda_checker.py` defined few sections above.
 salloc --job-name="debug" --nodes=1 --ntasks-per-node=1 --cpus-per-task=2 --gpus-per-node=2 --time=00:45:00
 ```
 
-#### 2) Create a python venv called `debug` on top of the pytorch module:
+#### 2) Create a python venv on top of the pytorch module:
 
 ```bash
 module load pytorch
