@@ -494,7 +494,7 @@ You need the following things:
             "pathMappings": [
                 {
                     "localRoot": "${workspaceFolder}",
-                    "remoteRoot": "/home/user/debugging"  // absolute path of project directory on the compute node
+                    "remoteRoot": "/absolute/path/project" 
                 }
             ]
         }
@@ -508,13 +508,13 @@ Replace the remoteRoot and the port if not available.
 Let's see how to debug a program together step by step.         
 We can debug the program `cuda_checker.py` defined few sections above.
 
-1) Allocate resources:
+#### 1) Allocate resources:
 
 ```bash
 salloc --job-name="debug" --nodes=1 --ntasks-per-node=1 --cpus-per-task=2 --gpus-per-node=2 --time=00:45:00
 ```
 
-2) Create a python venv called `debug` on top of the pytorch module:
+#### 2) Create a python venv called `debug` on top of the pytorch module:
 
 ```bash
 module load pytorch
@@ -526,7 +526,7 @@ An alternative would be to create and activate a conda environment. Or to use th
 
 **If you already have an existing virtual environment, skip this point.**
 
-3) Install `debugpy`:
+#### 3) Install `debugpy`:
 
 ```bash
 pip install debugpy
@@ -540,13 +540,13 @@ conda install debugpy
 **If you have already a virtual env with `debugpy`, skip this part.**
 
 
-4) Run the program:
+#### 4) Run the program:
 
 ```bash
 python -m debugpy --listen 0.0.0.0:5678 --wait-for-client cuda_checker.py
 ```
 
-5) Create the ssh tunnel:
+#### 5) Create the ssh tunnel:
 
 Open a new terminal on the login node and run:
 
@@ -558,7 +558,7 @@ Change dgx01 with dgx02 depending on the compute node in use.
 The port number must be consistent with the number used before.
 
 
-6) Run the debugger
+#### 6) Run the debugger
 
 Set some breakpoints and run the debugger.   
 If you need to run multiple times, just repeat points (4) and (6). No need to create the ssh tunnel multiple times.
