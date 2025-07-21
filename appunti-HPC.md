@@ -130,7 +130,8 @@ Using `salloc` is better than using `srun --pty /bin/bash` because it allows you
 
 Once a node is allocated with `salloc` or by submitting a `sbatch` script, it is possible to connect to it from another terminal via `ssh`.
 
-⚠ Use SSH only for debugging purposes. Do not use applications directly on the node because they are not managed by SLURM. You should always use `srun` to launch jobs.
+⚠ Use SSH only for debugging purposes. Do not run applications directly inside a compute node (if you entered the node by ssh) because they are not managed by SLURM. You should always launch jobs inside a slurm allocation.
+
 
 
 ## QOS (unlock more GPUs)
