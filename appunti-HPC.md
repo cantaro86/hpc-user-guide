@@ -32,6 +32,8 @@
 
 8. [Debugging](#debug-python-program-on-the-compute-node-with-vs-code)
 
+9. [VS-code server](#vs-code-server)
+
 
 ## Connecting via SSH
 
@@ -565,4 +567,31 @@ Set some breakpoints and run the debugger.
 If you need to run multiple times, just repeat points (4) and (6). No need to create the ssh tunnel multiple times.
 
 
+
+## VS-code server
+
+Since VS-code shells are non-login shells, there may be problems loading the modules.
+This happens because the module environment variables (`env | grep MODULE`) must be loaded by sourcing the file
+`/etc/profile.d/modules.sh`, which is not sourced for non-login shells (the file `/etc/profile` is not sourced).
+
+This command can show what kind of shell you are using:
+
+```bash
+  [ "$0" = "-bash" ] && echo "Login shell" || echo "Non-login shell"
+```
+
+To fix the problem, open `File > Preferences > Settings`, select the tab `Remote` and push the button on top-right to open the file `settings.json`.
+Paste the following code:
+
+```json
+{
+    "terminal.integrated.profiles.linux": {
+      "bash": {
+        "path": "bash",
+        "icon": "terminal-bash",
+        "args": ["--login"]
+      }
+    }
+}
+```
 
