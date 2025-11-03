@@ -3,30 +3,24 @@
 ## Table of Contents
 
 1. [Connecting via SSH](#connecting-via-ssh)
-   - [Configuration on Windows](#configuration-on-windows)
-   - [Configuration on Linux or Mac](#configuration-on-linux-or-mac)
-   - [Configuration of the ~/.ssh/config file](#configuration-of-the-sshconfig-file)
 
 2. [Using SLURM](#using-slurm)
-   - [Allocation Example](#allocation-example)
-   - [View Active Allocations](#view-active-allocations)
-   - [Freeing Allocations](#freeing-allocations)
    - [salloc VS ssh](#salloc-vs-ssh)
    - [QOS (unlock more GPUs)](#qos-unlock-more-gpus)
 
 3. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
-   - [Loading Modules and Environments](#loading-modules-and-environments)
    - [Example 1: Conda Environment](#example-1-conda-environment)
    - [Example 2: Module](#example-2-module)
    - [Activating a Conda Environment in an sbatch Script](#activating-a-conda-environment-in-an-sbatch-script)
 
 4. [JUPYTER](#jupyter)
-   - [Jupyter Configuration](#jupyter-configuration)
    - [Jupyter Script](#jupyter-script)
 
 5. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
 
 6. [Singularity](#singularity)
+   - [OLLAMA container](#ollama-container)
+   - [OLLAMA sbatch](#ollama-sbatch)
 
 7. [Tips](#tips)
 
@@ -430,6 +424,71 @@ import torch
 device_count = torch.cuda.device_count()
 print(f"Found {device_count} GPU(s)")
 ``` 
+
+
+### OLLAMA container
+
+At the moment, it is possible to run *ollama* within a docker container.    
+The container can be downloaded with 
+
+```bash
+singularity pull ollama.sif docker://ollama/ollama:0.10.0-rc3
+```
+
+but it is already available inside the folder: `/home/ollama`.  To run ollama you can follow these commands:
+
+```bash
+# load modules
+module load slurm singularity
+
+# allocate resources on DGX
+salloc --job-name="ollama" --nodes=1 --ntasks-per-node=1 --cpus-per-task=2 --gpus-per-node=1 --time=00:45:00
+
+# define env variables (change the PORT if it is not available)
+export OLLAMA_HOST="http://localhost:11435"
+export OLLAMA_DIR="/home/ollama"
+
+# Run ollama server
+singularity exec --nv \
+  -B ${OLLAMA_DIR}:/home/${USER}/.ollama \
+  -B /tmp:/tmp \
+  --env OLLAMA_HOST=${OLLAMA_HOST} \
+  --env OLLAMA_LOG_FILE="ollama.log" \
+  --env NVIDIA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} \
+  ${OLLAMA_DIR}/ollama.sif ollama serve &> ollama.log &
+
+# Run an interactive shell
+singularity shell --nv -B ${OLLAMA_DIR}:$HOME/.ollama --env OLLAMA_MODELS=$HOME/.ollama --env OLLAMA_HOST=${OLLAMA_HOST} ${OLLAMA_DIR}/ollama.sif
+
+# check list of models
+ollama list
+```
+
+1) All output is redirected to the log file `ollama.log`.
+
+2) By default, when running the server, the model folder is set to `OLLAMA_MODELS=/home/${USER}/.ollama/models`.
+This can be changed with the option `--env OLLAMA_MODELS=/your_path`
+
+3)  Inside the container `$HOME` is automatically set to `/home/${USER}`. In other systems it could be set to `/root/`  
+
+4)  When debugging, you can add these options to the server command: 
+```bash
+--env OLLAMA_DEBUG=true
+--env OLLAMA_LOG_LEVEL=debug
+--env OLLAMA_NUM_GPU_LAYERS=150    #  number of transformer layers the Ollama server will place on the GPU
+```
+
+### OLLAMA sbatch
+
+The commands in the section above can be run as a sbatch script. The script is available here: 
+[ollama.sbatch](./ollama.sbatch) .
+
+You can run it with 
+```bash
+sbatch ollama.sbatch
+```
+And read the output file `ollama.out`. It contains information on how to access the running ollama server by using `srun`.
+At the end, it is necessary to kill the allocation manually with an scancel.
 
 
 
