@@ -62,6 +62,14 @@ Host dgx-login
 
 ## Using SLURM
 
+In order to use SLURM you need to load the module:
+
+```bash
+module load slurm
+```
+
+It is recommended to add this line to the `~/.bashrc` file.   
+
 Always use the SLURM commands: `salloc` and `srun`:
 
 - `salloc` is used to allocate resources.
