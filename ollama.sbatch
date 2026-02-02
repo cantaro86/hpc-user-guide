@@ -18,10 +18,12 @@ module load singularity
 # -------------------------------
 
 export OLLAMA_DIR="/home/ollama"
+export OLLAMA_MODELS="${OLLAMA_DIR}/models"
 export SIF_FILE="${OLLAMA_DIR}/ollama.sif"
 export SIF_URI="docker://ollama/ollama:0.10.0-rc3"
 export OLLAMA_HOST="http://localhost:11439"
 
+mkdir -p "${OLLAMA_MODELS}"
 
 
 echo "==============================="
@@ -48,11 +50,13 @@ fi
 # -------------------------------
 echo "Starting Ollama server..."
 singularity exec --nv \
-  -B ${OLLAMA_DIR}:/home/${USER}/.ollama \
+  -B "${OLLAMA_DIR}:${OLLAMA_DIR}" \
   -B /tmp:/tmp \
-  --env OLLAMA_HOST=${OLLAMA_HOST} \
-  --env NVIDIA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} \
-  ${SIF_FILE} ollama serve &
+  --cleanenv \
+  --env OLLAMA_HOST="${OLLAMA_HOST}" \
+  --env OLLAMA_MODELS="${OLLAMA_MODELS}" \
+  --env NVIDIA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
+  "${SIF_FILE}" ollama serve &
 
 
 SERVER_PID=$!
@@ -72,7 +76,7 @@ cat <<EOF
 To open an interactive shell in the same job, run this
 **from your login node** (NOT inside this job):
 
-    srun --jobid=${SLURM_JOB_ID} --pty bash -c "module load singularity && singularity shell --nv -B ${OLLAMA_DIR}:\$HOME/.ollama --env OLLAMA_MODELS=\$HOME/.ollama --env OLLAMA_HOST=${OLLAMA_HOST} ${SIF_FILE}"
+    srun --jobid=${SLURM_JOB_ID} --pty bash -c "module load singularity && singularity shell --nv --cleanenv -B ${OLLAMA_DIR}:${OLLAMA_DIR} --env OLLAMA_MODELS=${OLLAMA_MODELS} --env OLLAMA_HOST=${OLLAMA_HOST} ${SIF_FILE}"
 
 Notes:
 - \$HOME inside the container is automatically set to your home directory.

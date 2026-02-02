@@ -16,14 +16,16 @@
 4. [JUPYTER](#jupyter)
    - [Jupyter Script](#jupyter-script)
 
-5. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
+5. [OLLAMA Module](#ollama-module)
 
-6. [Singularity](#singularity)
+6. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
+
+7. [Singularity](#singularity)
    - [OLLAMA container](#ollama-container)
    - [OLLAMA sbatch](#ollama-sbatch)
    - [SSH tunnel](#ssh-tunnel)
 
-7. [Tips](#tips)
+8. [Tips](#tips)
 
 8. [Debugging](#debug-python-program-on-the-compute-node-with-vs-code)
 
@@ -330,6 +332,35 @@ Use a Browser on your local machine and paste the address in the output below:
 # Run Jupyter
 jupyter-lab --no-browser --port=${port} --ip=${node}
 ```
+
+## OLLAMA Module
+
+For using ollama you can load the relevant module as follows:
+
+```bash
+module load ollama
+```
+
+In this way, you can use the ollama binary inside a slurm allocation.     
+For example this is a typical workflow:
+
+```bash
+salloc --job-name="ollama" --nodes=1 --ntasks-per-node=1 --cpus-per-task=1 --gpus-per-node=1 --time=00:30:00
+module load ollama
+export OLLAMA_HOST="http://localhost:${SLURM_JOB_ID}"
+ollama serve &
+ollama list
+```
+
+Using the `&` we are saying `ollama serve` to run in the background.
+
+By default the PORT used by OLLAMA is 11434. However, if many users run ollama at the same time you need to use a different port. Here we use the SLURM_JOB_ID as the ollama port.
+
+The models are saved in this path:
+```bash
+echo $OLLAMA_MODELS 
+```
+
 
 ## Other modules for HPC and pytorch
 
