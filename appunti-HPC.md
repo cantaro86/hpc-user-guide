@@ -198,7 +198,7 @@ Explanation of the table:
 - *longrun* is the qos for long running jobs, up to 7 days.
 
 What happens when a job is preempted?
-The job is stopped, reset to PENDING, and restarts from scratch.
+Initially there is a 5 minute waiting time. After that, the job is stopped, reset to PENDING, and restarts from scratch.
 
 Do you need many GPUs with no interruption? Please, ask the administrator for a reservation. 
 
