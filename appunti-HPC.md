@@ -200,6 +200,9 @@ Explanation of the table:
 What happens when a job is preempted?
 The job is stopped, reset to PENDING, and restarts from scratch.
 
+Do you need many GPUs with no interruption? Please, ask the administrator for a reservation. 
+
+-----------------------------
 
 
 ## ANACONDA and PYTORCH
