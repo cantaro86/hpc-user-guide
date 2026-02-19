@@ -156,8 +156,8 @@ In order to see which qos you can use, run:
 sacctmgr show assoc where user=$USER
 ```
 
-By default, each user can access *normal* QOS, which allows them to request up to 2 GPUs.
-The *mira* QOS on the other hand has no restrictions on the number of GPUs.
+By default, each user can access *normal* QOS, which allows them to request up to 2 GPUs.   
+The *mira* QOS is reserved for people working the MIRA project, has a limit of 4 GPUs.
 
 Let's see an example:
 
@@ -173,6 +173,33 @@ If you are using a sbatch script, just add the following line at the beginning o
 ```bash
 #SBATCH --qos=mira
 ```
+
+The qos *longrun* has no restrictions on the number of GPUs.    
+But it has low priority, and jobs with higher priority can surpass low-priority jobs by killing and requeuing them.
+
+This is summarized in the following table for the existing QOS:
+
+```bash
+sacctmgr show qos format=Name,Priority,Preempt%20,MaxTRESPU%20,MaxJobsPU,MaxWall
+```
+
+| Name | Priority | Preempt | MaxTRESPU | MaxJobsPU | MaxWall
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| normal | 50 | longrun | cpu=100,gres/gpu=2 | 100 | |
+| mira | 50 | longrun | cpu=100,gres/gpu=4 | 100 | |
+| notimelim+ | 0 | | | | | 
+| longrun | 1 | | | | 7-00:00:00 |
+| urgent | 100 | longrun,normal | cpu=100,gres/gpu=2 | 100 | |
+
+Explanation of the table:
+- The QOS *notimelimit* is not available to users. 
+- The qos *urgent* let a user allocate at most 2 GPUs, 100 GPUs and 100 jobs. It has the highest priority, and it can replace jobs in the *normal* and *longrun* qos. **Please, use it only if you really need it.**
+- *mira* now lets you allocate up to 4 GPUs.
+- *longrun* is the qos for long running jobs, up to 7 days.
+
+What happens when a job is preempted?
+The job is stopped, reset to PENDING, and restarts from scratch.
+
 
 
 ## ANACONDA and PYTORCH
