@@ -377,14 +377,14 @@ For example this is a typical workflow:
 ```bash
 salloc --job-name="ollama" --nodes=1 --ntasks-per-node=1 --cpus-per-task=1 --gpus-per-node=1 --time=00:30:00
 module load ollama
-export OLLAMA_HOST="http://localhost:${SLURM_JOB_ID}"
+export OLLAMA_HOST="http://localhost:11432"
 ollama serve &
 ollama list
 ```
 
 Using the `&` we are saying `ollama serve` to run in the background.
 
-By default the PORT used by OLLAMA is 11434. However, if many users run ollama at the same time you need to use a different port. Here we use the SLURM_JOB_ID as the ollama port.
+By default the PORT used by OLLAMA is 11434. However, if many users run ollama at the same time you need to use a different port. Here we use 11432 as the ollama port.
 
 The models are saved in this path:
 ```bash
