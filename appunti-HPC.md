@@ -32,6 +32,34 @@
 9. [VS-code server](#vs-code-server)
 
 
+
+## Cluster Overview and Usage Policy
+
+### Cluster Topology
+The HPC cluster is composed of:
+
+- Login node (hpchead01): used for SSH access, job submission (SLURM), file management, and lightweight operations.
+
+- 2 DGX compute nodes (dgx01 and dgx02): GPU-enabled nodes dedicated to all computational workloads (e.g., large simulations, machine learning, data analysis).
+
+### Usage Rules:
+
+- The login node must **not** be used for computational workloads e.g., training, large-scale data processing, long-running scripts.
+
+- All CPU/GPU-intensive tasks must be executed on the compute nodes through the SLURM scheduler.
+
+- Jupyter notebooks using significant resources (GPU, large datasets, high memory) must run on compute nodes.
+
+- **Resources must be requested appropriately and not left idle.**
+
+Direct execution on compute nodes outside scheduled jobs **is not permitted**.
+
+
+## Contacts
+
+- Mailing list: hpc@uniudamce.onmicrosoft.com
+
+
 ## Connecting via SSH
 
 Always use the IP address `158.110.146.245` and connect using the command:
@@ -187,7 +215,7 @@ sacctmgr show qos format=Name,Priority,Preempt%20,MaxTRESPU%20,MaxJobsPU,MaxWall
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | normal | 50 | longrun | cpu=100,gres/gpu=2 | 100 | |
 | mira | 50 | longrun | cpu=100,gres/gpu=4 | 100 | |
-| notimelim+ | 0 | | | | | 
+| notimelimit | 0 | | | | | 
 | longrun | 1 | | | | 7-00:00:00 |
 | urgent | 100 | longrun,normal | cpu=100,gres/gpu=2 | 100 | |
 
@@ -576,7 +604,8 @@ Reminder:
 1) check that the REMOTE_PORT in [ollama_tunnel.py](ollama_tunnel.py) corresponds to the ollama server port.
 2) If you run the jupyter notebook on the same node as the ollama server, there is no need to create a tunnel, and this program does nothing. 
 
-========================================================================================================
+----------------------------------------------------------------------------------------------------------------------------
+
 
 ## Tips
 
@@ -740,3 +769,121 @@ Paste the following code:
 }
 ```
 
+--------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+## Storage information
+
+| Path | Filesystem | Chunk Size | Targets | Purpose |
+|------|------------|-----------|---------|---------|
+| `/fast_disk/models/` | BeeGFS RAID0 | 16 MiB | 2 | Stores large pre-trained and fine-tuned ML model weights (e.g. LLM `.safetensors`, `.bin` files). Large chunk size optimizes sequential read throughput during model loading at inference or training startup. |
+| `/fast_disk/checkpoints/` | BeeGFS RAID0 | 8 MiB | 2 | Stores training checkpoints periodically saved during distributed GPU training (e.g. SLURM jobs on DGX H100). Striped across both nodes for fast write bursts; chunk size balances throughput and I/O granularity. |
+| `/fast_disk/scratch/` | BeeGFS RAID0 | 4 MiB | 2 | Temporary high-speed workspace for active SLURM jobs: staged dataset batches, intermediate tensors, ephemeral preprocessing outputs. Data is transient and safe to delete after job completion. |
+| `/fast_disk/datasets/text/` | BeeGFS RAID0 | 512 KiB | 1 | Contains text data, tokenized datasets, and NLP data files (typically KB to a few MB each, e.g. `.jsonl`, `.parquet`, `.txt`). Single target avoids metadata overhead from the high volume of small files. |
+| `/fast_disk/datasets/photos/` | BeeGFS RAID0 | 2 MiB | 1 | Contains image datasets used for computer vision or multimodal ML training (typical file size 1–50 MB, e.g. JPEG/PNG). Single target is sufficient at this scale; chunk size aligns well with medium-sized image files. |
+| `/fast_disk/datasets/videos/` | BeeGFS RAID0 | 8 MiB | 2 | Contains video datasets for ML training tasks such as action recognition or video captioning (files typically 100 MB–several GB, e.g. MP4/MKV). Striped across both nodes to maximize sequential read bandwidth. |
+| `/clusterdata/models/` | NFS (NAS) | — | — | Long-term cold storage for model weights and snapshots. Slower than `/fast_disk`; suitable for archiving released or infrequently used models. Total NAS capacity: 42 TB (12 TB free). |
+| `/clusterdata/datasets/` | NFS (NAS) | — | — | Persistent storage for raw and curated datasets. Serves as the source of truth before data is staged into `/fast_disk/datasets/` for active training runs. |
+| `/clusterdata/ollama/` | NFS (NAS) | — | — | Stores models and blobs managed by Ollama (local LLM inference runtime). Shared across all cluster nodes via NFS for serving inference requests without duplicating model files. |
+
+
+
+
+| Folder                  | Data                                                  | Lifetime              | Purpose                                   |
+| ----------------------- | ----------------------------------------------------- | --------------------- | ----------------------------------------- |
+| `/fast_disk/scratch/`     | Temporary tensors, staged batches, ephemeral intermediates | Duration of a job     | Fast I/O buffer during active computation |
+| `/fast_disk/checkpoints/` | Model weights saved at epoch N                        | Persistent, long-term | Resume training, rollback, evaluation     |
+
+#### Example on how to use the scratch folder
+
+```
+# In your SLURM job script
+SCRATCH=/fast_disk/scratch/${USER}/${SLURM_JOB_ID}
+mkdir -p $SCRATCH
+# ... your training code ...
+rm -rf $SCRATCH  # cleanup on exit
+```
+
+
+```bash
+module load ai-storage
+```
+
+This defines the environment variables:
+```
+HF_HOME:               /fast_disk/models/huggingface
+TRANSFORMERS_CACHE:    /fast_disk/models/huggingface
+HF_DATASETS_CACHE:     /fast_disk/datasets/huggingface
+TORCH_HOME:            /fast_disk/models/torch
+```
+
+
+## Network topology
+
+## Network Topology
+
+The cluster uses three distinct networks with different roles.
+
+### Node IP Address Reference
+
+| Node      | Interface        | IP Address        | Network / Role            |
+|-----------|------------------|-------------------|---------------------------|
+| dgx01     | eno3 (prov)      | 10.149.146.53     | Internal LAN / BeeGFS mgmt / NAS |
+| dgx01     | bond1            | 10.130.122.53     | /clusterdata NFS (RoCE)   |
+| dgx01     | ibp24s0          | 10.0.1.1          | BeeGFS RDMA / NCCL (IB)   |
+| dgx01     | ibp64s0          | 10.0.2.1          | BeeGFS RDMA / NCCL (IB)   |
+| dgx01     | ibp79s0          | 10.0.3.1          | BeeGFS RDMA / NCCL (IB)   |
+| dgx01     | ibp94s0          | 10.0.4.1          | BeeGFS RDMA / NCCL (IB)   |
+| dgx01     | ibp154s0         | 10.0.5.1          | BeeGFS RDMA / NCCL (IB)   |
+| dgx01     | ibp192s0         | 10.0.6.1          | BeeGFS RDMA / NCCL (IB)   |
+| dgx01     | ibp206s0         | 10.0.7.1          | BeeGFS RDMA / NCCL (IB)   |
+| dgx01     | ibp220s0         | 10.0.8.1          | BeeGFS RDMA / NCCL (IB)   |
+| dgx02     | eno3             | 10.149.146.54     | Internal LAN / NAS        |
+| dgx02     | bond1            | 10.130.122.54     | /clusterdata NFS (RoCE)   |
+| dgx02     | ibp24s0          | 10.0.1.2          | BeeGFS RDMA / NCCL (IB)   |
+| dgx02     | ibp64s0          | 10.0.2.2          | BeeGFS RDMA / NCCL (IB)   |
+| dgx02     | ibp79s0          | 10.0.3.2          | BeeGFS RDMA / NCCL (IB)   |
+| dgx02     | ibp94s0          | 10.0.4.2          | BeeGFS RDMA / NCCL (IB)   |
+| dgx02     | ibp154s0         | 10.0.5.2          | BeeGFS RDMA / NCCL (IB)   |
+| dgx02     | ibp192s0         | 10.0.6.2          | BeeGFS RDMA / NCCL (IB)   |
+| dgx02     | ibp206s0         | 10.0.7.2          | BeeGFS RDMA / NCCL (IB)   |
+| dgx02     | ibp220s0         | 10.0.8.2          | BeeGFS RDMA / NCCL (IB)   |
+| hpchead01 | eno1             | 158.110.146.206   | Public internet / SSH / default GW |
+| hpchead01 | eno2             | 10.149.146.206    | Internal LAN / BeeGFS / NAS |
+| hpchead01 | eno3             | 158.110.146.61    | Secondary public interface |
+| hpchead01 | eno4             | 10.130.124.1      | Internal cluster management |
+| NAS       | —                | 10.149.146.50     | Synology `/volume1/clusterdata` |
+
+### `/fast_disk` — BeeGFS Storage
+
+| Node       | Interface                     | Technology       | Speed                   |
+|------------|-------------------------------|------------------|-------------------------|
+| dgx01      | ibp24s0 – ibp220s0 (8 ports)  | InfiniBand NDR   | 400 Gbps/port × 8 ports |
+| dgx02      | ibp24s0 – ibp220s0 (8 ports)  | InfiniBand NDR   | 400 Gbps/port × 8 ports |
+| hpchead01  | eno2 → 10.149.146.206         | Ethernet 1 GbE   | 1 Gbps                  |
+
+- BeeGFS management daemon runs on **dgx01** at `10.149.146.53` (`sysMgmtdHost`)
+- DGX nodes use all 8 IB ports via `connInterfaces.conf` for parallel RDMA throughput
+- `hpchead01` accesses BeeGFS via `eno2` (1 GbE) — avoid large transfers from the head node
+
+### `/clusterdata` — NAS Storage (NFS v3)
+
+| Node       | Interface              | Technology                       | Speed     |
+|------------|------------------------|----------------------------------|-----------|
+| dgx01      | bond1 → 10.130.122.53  | 100 GbE RoCE × 2 (LACP 802.3ad) | 200 Gbps  |
+| dgx02      | bond1 → 10.130.122.54  | 100 GbE RoCE × 2 (LACP 802.3ad) | 200 Gbps  |
+| hpchead01  | eno2 → 10.149.146.206  | Ethernet 1 GbE                   | 1 Gbps    |
+
+- NAS at `10.149.146.50`, NFS v3 over TCP, `rsize/wsize=131072`
+- Actual throughput capped by Synology NAS disk and NIC capacity
+
+### Storage Bandwidth Summary
+
+| Path           | Transport on DGX nodes  | Transport on hpchead01 | Max Bandwidth (DGX) |
+|----------------|-------------------------|------------------------|---------------------|
+| `/fast_disk`   | InfiniBand NDR (RDMA)   | Ethernet 1 GbE (eno2)  | 400 Gbps × 8 ports  |
+| `/clusterdata` | 100 GbE RoCE (bond1)    | Ethernet 1 GbE (eno2)  | 200 Gbps            |
+| `/home`        | Ethernet 1 GbE (eno3)   | Ethernet 1 GbE (eno2)  | 1 Gbps              |
+| `/cm/shared`   | Ethernet 1 GbE (eno3)   | Ethernet 1 GbE (eno2)  | 1 Gbps              |
