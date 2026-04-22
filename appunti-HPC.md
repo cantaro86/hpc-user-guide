@@ -2,34 +2,49 @@
 
 ## Table of Contents
 
-1. [Connecting via SSH](#connecting-via-ssh)
+1. [Cluster Overview and Usage Policy](#cluster-overview-and-usage-policy)
+   - [Cluster Topology](#cluster-topology)
+   - [Usage Rules](#usage-rules)
 
-2. [Using SLURM](#using-slurm)
+2. [Contacts](#contacts)
+
+3. [Connecting via SSH](#connecting-via-ssh)
+
+4. [Using SLURM](#using-slurm)
    - [salloc VS ssh](#salloc-vs-ssh)
    - [QOS (unlock more GPUs)](#qos-unlock-more-gpus)
 
-3. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
-   - [Example 1: Conda Environment](#example-1-conda-environment)
-   - [Example 2: Module](#example-2-module)
+5. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
+   - [PyTorch Module](#pytorch-module)
+   - [EXAMPLE 1 (conda environment)](#example-1-conda-environment)
+   - [EXAMPLE 2 (module)](#example-2-module)
    - [Activating a Conda Environment in an sbatch Script](#activating-a-conda-environment-in-an-sbatch-script)
 
-4. [JUPYTER](#jupyter)
+6. [JUPYTER](#jupyter)
    - [Jupyter Script](#jupyter-script)
 
-5. [OLLAMA Module](#ollama-module)
+7. [OLLAMA Module](#ollama-module)
 
-6. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
+8. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
 
-7. [Singularity](#singularity)
+9. [Singularity](#singularity)
    - [OLLAMA container](#ollama-container)
    - [OLLAMA sbatch](#ollama-sbatch)
    - [SSH tunnel](#ssh-tunnel)
 
-8. [Tips](#tips)
+10. [Tips](#tips)
 
-8. [Debugging](#debug-python-program-on-the-compute-node-with-vs-code)
+11. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
 
-9. [VS-code server](#vs-code-server)
+12. [VS-code server](#vs-code-server)
+
+13. [Storage information](#storage-information)
+
+14. [Network Topology](#network-topology)
+    - [Node IP Address Reference](#node-ip-address-reference)
+    - [`/fast_disk` — BeeGFS Storage](#fast_disk--beegfs-storage)
+    - [`/clusterdata` — NAS Storage (NFS v3)](#clusterdata--nas-storage-nfs-v3)
+    - [Storage Bandwidth Summary](#storage-bandwidth-summary)
 
 
 
@@ -820,7 +835,6 @@ TORCH_HOME:            /fast_disk/models/torch
 ```
 
 
-## Network topology
 
 ## Network Topology
 
