@@ -39,6 +39,7 @@
 12. [VS-code server](#vs-code-server)
 
 13. [Storage information](#storage-information)
+    - [ai-storage module](#ai-storage-module) 
 
 14. [Network Topology](#network-topology)
     - [Node IP Address Reference](#node-ip-address-reference)
@@ -791,6 +792,67 @@ Paste the following code:
 
 ## Storage information
 
+
+The cluster provides three main storage areas with different performance and persistence characteristics: 
+- `/home`
+- `/clusterdata`
+- `/fast_disk`
+
+Choosing the correct location is essential for performance and data safety.
+
+***
+
+### `/home` — Personal Storage
+
+- Intended for personal files, scripts, environments, and small datasets
+- Suitable for code, configuration files, and lightweight data
+- Limited performance (1 GbE) and not designed for heavy I/O workloads
+
+Use `/home` as your working environment, but avoid storing large datasets or running I/O-intensive jobs from this path.
+
+***
+
+### `/clusterdata` — Persistent Storage (NAS)
+
+- Shared NFS storage for **long-term data preservation**
+- Backed by NAS; reliable but slower than local or BeeGFS storage
+- Accessible from all nodes
+
+Typical usage:
+
+- `/clusterdata/datasets/` — source of truth for raw and curated datasets
+- `/clusterdata/models/` — long-term storage for trained models and snapshots
+- `/clusterdata/ollama/` — shared model storage for Ollama inference
+
+Use this area for data that must be retained over time. For active workloads, data should be copied to `/fast_disk`.
+
+***
+
+### `/fast_disk` — High-Performance Storage (BeeGFS)
+
+- High-speed parallel filesystem over InfiniBand (RDMA)
+- Designed for **active workloads and high I/O throughput**
+- Data is **not guaranteed to be persistent** and may be cleaned periodically
+
+Typical usage:
+
+- `/fast_disk/models/` — large model weights for fast loading during training/inference
+- `/fast_disk/models/ollama/` — ollama models are stored here
+- `/fast_disk/models/huggingface` — huggingface models are stored here   
+- `/fast_disk/checkpoints/` — training checkpoints with high write throughput
+- `/fast_disk/scratch/` — temporary job data (recommended for SLURM jobs)
+- `/fast_disk/datasets/text/` — text datasets (many small files)
+- `/fast_disk/datasets/photos/` — image datasets
+- `/fast_disk/datasets/videos/` — large video datasets
+
+Use `/fast_disk` for all performance-critical operations. Always treat it as **temporary storage** and copy important results back to `/clusterdata`.
+
+***
+
+
+The following table provides a detailed description of each folder:
+
+
 | Path | Filesystem | Chunk Size | Targets | Purpose |
 |------|------------|-----------|---------|---------|
 | `/fast_disk/models/` | BeeGFS RAID0 | 16 MiB | 2 | Stores large pre-trained and fine-tuned ML model weights (e.g. LLM `.safetensors`, `.bin` files). Large chunk size optimizes sequential read throughput during model loading at inference or training startup. |
@@ -804,14 +866,21 @@ Paste the following code:
 | `/clusterdata/ollama/` | NFS (NAS) | — | — | Stores models and blobs managed by Ollama (local LLM inference runtime). Shared across all cluster nodes via NFS for serving inference requests without duplicating model files. |
 
 
+- **num-targets**: specifies how many storage servers (the 2 DGX nodes) a file is striped across for parallel read/write performance; 
 
+- **chunk-size**: sets the block size (e.g., 16MiB) written to each target before moving to the next — large for fast big-file access, small to avoid wasting space on tiny files.
+
+
+#### scratch vs checkpoint
+
+The folders scratch and checkpoint have two different purposes. Let's see a better description:
 
 | Folder                  | Data                                                  | Lifetime              | Purpose                                   |
 | ----------------------- | ----------------------------------------------------- | --------------------- | ----------------------------------------- |
 | `/fast_disk/scratch/`     | Temporary tensors, staged batches, ephemeral intermediates | Duration of a job     | Fast I/O buffer during active computation |
 | `/fast_disk/checkpoints/` | Model weights saved at epoch N                        | Persistent, long-term | Resume training, rollback, evaluation     |
 
-#### Example on how to use the scratch folder
+**Example** on how to use the scratch folder
 
 ```
 # In your SLURM job script
@@ -822,11 +891,13 @@ rm -rf $SCRATCH  # cleanup on exit
 ```
 
 
+### ai-storage module
+
 ```bash
 module load ai-storage
 ```
 
-This defines the environment variables:
+This module only defines the environment variables:
 ```
 HF_HOME:               /fast_disk/models/huggingface
 TRANSFORMERS_CACHE:    /fast_disk/models/huggingface
@@ -844,7 +915,7 @@ The cluster uses three distinct networks with different roles.
 
 | Node      | Interface        | IP Address        | Network / Role            |
 |-----------|------------------|-------------------|---------------------------|
-| dgx01     | eno3 (prov)      | 10.149.146.53     | Internal LAN / BeeGFS mgmt / NAS |
+| dgx01     | eno3      | 10.149.146.53     | Internal LAN / BeeGFS mgmt / NAS |
 | dgx01     | bond1            | 10.130.122.53     | /clusterdata NFS (RoCE)   |
 | dgx01     | ibp24s0          | 10.0.1.1          | BeeGFS RDMA / NCCL (IB)   |
 | dgx01     | ibp64s0          | 10.0.2.1          | BeeGFS RDMA / NCCL (IB)   |
@@ -880,7 +951,7 @@ The cluster uses three distinct networks with different roles.
 
 - BeeGFS management daemon runs on **dgx01** at `10.149.146.53` (`sysMgmtdHost`)
 - DGX nodes use all 8 IB ports via `connInterfaces.conf` for parallel RDMA throughput
-- `hpchead01` accesses BeeGFS via `eno2` (1 GbE) — avoid large transfers from the head node
+- `hpchead01` accesses BeeGFS via `eno2` (1 GbE)
 
 ### `/clusterdata` — NAS Storage (NFS v3)
 
