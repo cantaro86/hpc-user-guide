@@ -491,7 +491,7 @@ module load singularity
 singularity pull pytorch_2.7.0-cuda12.8.sif docker://pytorch/pytorch:2.7.0-cuda12.8-cudnn9-runtime
 
 salloc --nodes=1 --ntasks=1 --gpus-per-node=2 --time=00:05:00
-singularity shell --nv pytorch_2.7.0-cuda12.8-cudnn9-runtime.sif
+singularity shell --nv pytorch_2.7.0-cuda12.8.sif
 
 Singularity> python
 >>> import torch 
