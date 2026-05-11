@@ -844,6 +844,7 @@ Typical usage:
 - `/fast_disk/datasets/text/` — text datasets (many small files)
 - `/fast_disk/datasets/photos/` — image datasets
 - `/fast_disk/datasets/videos/` — large video datasets
+- `/fast_disk/datasets/numerical/` — numerical datasets
 
 Use `/fast_disk` for all performance-critical operations. Always treat it as **temporary storage** and copy important results back to `/clusterdata`.
 
@@ -861,6 +862,7 @@ The following table provides a detailed description of each folder:
 | `/fast_disk/datasets/text/` | BeeGFS RAID0 | 512 KiB | 1 | Contains text data, tokenized datasets, and NLP data files (typically KB to a few MB each, e.g. `.jsonl`, `.parquet`, `.txt`). Single target avoids metadata overhead from the high volume of small files. |
 | `/fast_disk/datasets/photos/` | BeeGFS RAID0 | 2 MiB | 1 | Contains image datasets used for computer vision or multimodal ML training (typical file size 1–50 MB, e.g. JPEG/PNG). Single target is sufficient at this scale; chunk size aligns well with medium-sized image files. |
 | `/fast_disk/datasets/videos/` | BeeGFS RAID0 | 8 MiB | 2 | Contains video datasets for ML training tasks such as action recognition or video captioning (files typically 100 MB–several GB, e.g. MP4/MKV). Striped across both nodes to maximize sequential read bandwidth. |
+| `/fast_disk/datasets/numerical/` | BeeGFS RAID0 | 4 MiB | 2 | Contains numerical datasets for ML training: tabular data (CSV, Parquet), array data (HDF5, NPY/NPZ), and other structured formats. |
 | `/clusterdata/models/` | NFS (NAS) | — | — | Long-term cold storage for model weights and snapshots. Slower than `/fast_disk`; suitable for archiving released or infrequently used models. Total NAS capacity: 42 TB (12 TB free). |
 | `/clusterdata/datasets/` | NFS (NAS) | — | — | Persistent storage for raw and curated datasets. Serves as the source of truth before data is staged into `/fast_disk/datasets/` for active training runs. |
 | `/clusterdata/ollama/` | NFS (NAS) | — | — | Stores models and blobs managed by Ollama (local LLM inference runtime). Shared across all cluster nodes via NFS for serving inference requests without duplicating model files. |
