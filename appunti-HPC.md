@@ -39,7 +39,8 @@
 12. [VS-code server](#vs-code-server)
 
 13. [Storage information](#storage-information)
-    - [ai-storage module](#ai-storage-module) 
+    - [Where do I save my data on /fast_disk?](#where-do-i-save-my-data-on-fast_disk)
+    - [AI-storage module](#ai-storage-module) 
 
 14. [Network Topology](#network-topology)
     - [Node IP Address Reference](#node-ip-address-reference)
@@ -892,8 +893,24 @@ mkdir -p $SCRATCH
 rm -rf $SCRATCH  # cleanup on exit
 ```
 
+### Where do I save my data on /fast_disk?
 
-### ai-storage module
+You can create a folder with your username and save your data inside it.
+For example you can use these paths:
+
+```bash
+mkdir /fast_disk/models/$USER
+mkdir /fast_disk/checkpoints/$USER
+mkdir /fast_disk/dataset/$USER
+mkdir /fast_disk/datasets/videos/$USER
+```
+
+The folders of `/fast_disk/datasets/{videos,photos,text,numerical}` are optimized for data of a specific size and format.   
+**If you need an I/O optimization for your specific dataset, please contact the administrator.**
+
+--------------------------
+
+### AI-storage module
 
 ```bash
 module load ai-storage
@@ -907,6 +924,7 @@ HF_DATASETS_CACHE:     /fast_disk/datasets/huggingface
 TORCH_HOME:            /fast_disk/models/torch
 ```
 
+---------------------------
 
 
 ## Network Topology
