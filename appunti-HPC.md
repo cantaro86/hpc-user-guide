@@ -12,6 +12,7 @@
 
 4. [Using SLURM](#using-slurm)
    - [salloc VS ssh](#salloc-vs-ssh)
+   - [Use sjoin to connect to the compute nodes](#use-sjoin-to-connect-to-the-compute-nodes)
    - [QOS (unlock more GPUs)](#qos-unlock-more-gpus)
 
 5. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
