@@ -217,7 +217,7 @@ sjoin 184630
 `sjoin` runs the following command under the hood:
 
 ```bash
-srun --jobid=<id> --overlap --pty --gpus=<num_gpus> bash
+srun --jobid=<id> --overlap --pty --gpus=<num_gpus> --nodelist=<node_name> bash
 ```
 
 If your job spans multiple nodes, sjoin requires a node name, for example 
