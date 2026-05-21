@@ -172,17 +172,58 @@ scancel $SLURM_JOB_ID
 
 ## salloc VS ssh
 
-With the command `salloc` you connect directly to the allocated node.    
-Using the command
+With the command `salloc` you can directly login into the allocated node:    
+```bash
+salloc
+```
+Using the command:
 ```bash
 salloc -N 2
 ```
-you allocate two nodes, but the login is into the first node (in our case to `dgx01`).   
-Using `salloc` is better than using `srun --pty /bin/bash` because it allows you to launch repeated `srun` commands within the allocation.
+you allocate two nodes, but the login is only into the first node (in our case to `dgx01`).   
+Using `salloc` is better than using `srun --pty /bin/bash` because it allows you to launch repeated `srun` commands within the allocation (mainly for multi-node allocation).
 
-Once a node is allocated with `salloc` or by submitting a `sbatch` script, it is possible to connect to it from another terminal via `ssh`.
+Once a node is allocated with `salloc` or by submitting a `sbatch` script, it is possible to connect to it from another terminal via `ssh`.  
 
-⚠ Use SSH only for debugging purposes. Do not run applications directly inside a compute node (if you entered the node by ssh) because they are not managed by SLURM. You should always launch jobs inside a slurm allocation.
+⚠ Do not run applications directly inside a compute node (if you entered the node by ssh) because they are not managed by SLURM.
+
+⚠ It is **strongly** discouraged to connect to the nodes via ssh!
+
+Use **sjoin** instead!
+
+
+### Use sjoin to connect to the compute nodes
+
+The `sjoin` command lets you open an interactive shell inside one of your currently running SLURM jobs. This is useful for monitoring progress, inspecting output files, running `nvidia-smi`, or attaching a debugger — all without starting a new job allocation.
+
+- You must have at least one job in **running** state (`R`) on the cluster.
+- `sjoin` does **not** start a new job. It attaches to an existing one.
+
+If you have a single running job, just call `sjoin` with no arguments.
+If you have multiple running jobs, you must specify the job ID:
+
+
+**Examples**
+
+```bash
+# Single running job — attaches automatically
+sjoin
+
+# Multiple running jobs — specify which one to join
+sjoin 184630
+```
+
+`sjoin` runs the following command under the hood:
+
+```bash
+srun --jobid=<id> --overlap --pty --gpus=<num_gpus> bash
+```
+
+If your job spans multiple nodes, sjoin requires a node name, for example 
+```bash
+sjoin 185888 dgx02, 
+```
+to open a shell on the selected allocated node.
 
 
 
