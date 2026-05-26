@@ -280,7 +280,7 @@ sacctmgr show qos format=Name,Priority,Preempt%20,MaxTRESPU%20,MaxJobsPU,MaxWall
 
 Explanation of the table:
 - The QOS *notimelimit* is not available to users. 
-- The qos *urgent* let a user allocate at most 2 GPUs, 100 GPUs and 100 jobs. It has the highest priority, and it can replace jobs in the *normal* and *longrun* qos. **Please, use it only if you really need it.**
+- The qos *urgent* let a user allocate at most 2 GPUs, 100 CPUs and 100 jobs. It has the highest priority, and it can replace jobs in the *normal* and *longrun* qos. **Please, use it only if you really need it.**
 - *mira* now lets you allocate up to 4 GPUs.
 - *longrun* is the qos for long running jobs, up to 7 days.
 
