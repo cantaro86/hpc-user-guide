@@ -69,13 +69,19 @@ The HPC cluster is composed of:
 
 - Jupyter notebooks using significant resources (GPU, large datasets, high memory) must run on compute nodes.
 
-- **Resources must be requested appropriately and not left idle.**
-
 - Connecting via ssh to compute nodes is not allowed. Direct execution on compute nodes outside scheduled jobs **is not permitted**.
 
-- VS code with the SSH extension takes up over 1GB of memory. Don't use more than one active window connected to the cluster.
+- VS-code with the SSH extension takes up over 1GB of memory. Don't use more than one active vs-code window connected to the cluster.
+
+- AI/ML models and large datasets should not be stored in the `/home`. Use `/clusterdata` or `/fast_disk` instead.
+
+- **Resources must be requested appropriately and not left idle.**
 
 
+Keeping a model loaded on a GPU consumes power even when you’re not doing inference.
+If you won’t use the model for many hours (e.g., overnight), please quit your program.
+
+If you have doubts or questions, please contact the administrator.
 
 ## Contacts
 
@@ -911,7 +917,7 @@ Typical usage:
 - `/clusterdata/models/` — long-term storage for trained models and snapshots
 - `/clusterdata/ollama/` — shared model storage for Ollama inference
 
-Use this area for data that must be retained over time. For active workloads, data should be copied to `/fast_disk`.
+Use this area for data that must be retained over time. For higher speed, data should be copied to `/fast_disk`.
 
 ***
 
