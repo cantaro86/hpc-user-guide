@@ -697,7 +697,7 @@ At the end, it is necessary to kill the allocation manually with an scancel.
 
 If you want to interact with the ollama server from a jupyter notebook on the login node, you need to create an ssh tunnel.
 The ollama server runs on a compute node, so a tunnel is mandadory. 
-The useful program [ollama_tunnel.py](ollama_tunnel.py) let's you create a tunnel from inside the jupyter notebook.  
+The useful program [tunnel.py](tunnel.py) let's you create a tunnel from inside the jupyter notebook.  
 You can simply create a cell with:
 
 ```python
@@ -706,12 +706,9 @@ ensure_tunnel_active()
 ```
 
 Reminder:
-1) check that the REMOTE_PORT in [ollama_tunnel.py](ollama_tunnel.py) corresponds to the ollama server port.
+1) check that the REMOTE_PORT in [tunnel.py](tunnel.py) corresponds to the ollama server port.
 2) If you run the jupyter notebook on the same node as the ollama server, there is no need to create a tunnel, and this program does nothing. 
-3) If you run the jupyter on the main node, remember to avoid heavy computations. You will still need an ssh tunnel like:
-```bash
-ssh -N -L 8321:localhost:8888 <your_user_name>@hpchead01
-```
+3) If you run the jupyter on the main node, remember to avoid heavy computations. 
 
 ----------------------------------------------------------------------------------------------------------------------------
 
