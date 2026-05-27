@@ -70,7 +70,10 @@ The HPC cluster is composed of:
 
 - **Resources must be requested appropriately and not left idle.**
 
-Direct execution on compute nodes outside scheduled jobs **is not permitted**.
+- Connecting via ssh to compute nodes is not allowed. Direct execution on compute nodes outside scheduled jobs **is not permitted**.
+
+- VS code with the SSH extension takes up over 1GB of memory. Don't use more than one active window connected to the cluster.
+
 
 
 ## Contacts
