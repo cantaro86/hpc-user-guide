@@ -23,6 +23,7 @@
 
 6. [JUPYTER](#jupyter)
    - [Jupyter Script](#jupyter-script)
+   - [VS-code jupyter extension](#vs-code-jupyter-extension)
 
 7. [OLLAMA Module](#ollama-module)
 
@@ -453,6 +454,42 @@ Use a Browser on your local machine and paste the address in the output below:
 jupyter-lab --no-browser --port=${port} --ip=${node}
 ```
 
+## VS-code jupyter extension
+
+In the sbatch script [jupyter_vscode.sbatch](./ollama.sbatch) I propose an upgraded version of the previous script.
+
+The differences are:
+- You can activate any personal conda environment
+- You can define a jupyter notebook **token**, instead of using the token automatically generated.
+- You run the SSH tunnel command from the terminal in VS-code on the login node.
+
+Be careful that if many users use the same script, there may be conflicts with the `port` and `token`. So please modify the current values.
+
+### Instructions
+
+**STEP 1**: run the script
+
+```bash
+sbatch jupyter_vscode.sbatch
+```
+
+**STEP 2**: Create SSH tunnel from the login node terminal (VS Code terminal).   
+For example, if the JupyterLab started on node dgx02, with port=45892 and token="example-vscode"
+```bash
+user@hpchead01:~$ ssh -N -f -L 45892:dgx02:45892 localhost
+```
+The correct ssh command can be found in the file `jupyter_vscode.log`.
+
+
+**STEP 3**: In VS Code top-right:
+  1. Select Kernel → Existing Jupyter Server
+  2. Paste this URL:
+     http://localhost:45892/lab?token=example-vscode
+
+VS-code automatically saves the URL for the next use.
+
+---------------------------
+
 ## OLLAMA Module
 
 For using ollama you can load the relevant module as follows:
@@ -653,7 +690,7 @@ At the end, it is necessary to kill the allocation manually with an scancel.
 ### SSH tunnel
 
 If you want to interact with the ollama server from a jupyter notebook on the login node, you need to create an ssh tunnel.
-The ollama server runs on a compute node, so a tunnel in mandadory. 
+The ollama server runs on a compute node, so a tunnel is mandadory. 
 The useful program [ollama_tunnel.py](ollama_tunnel.py) let's you create a tunnel from inside the jupyter notebook.  
 You can simply create a cell with:
 
