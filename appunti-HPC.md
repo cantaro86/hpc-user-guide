@@ -73,6 +73,8 @@ The HPC cluster is composed of:
 
 - VS-code with the SSH extension takes up over 1GB of memory. Don't use more than one active vs-code window connected to the cluster.
 
+- If you need specific resources, e.g. one full node for 1 day with no interruptions, ask the administrator for a reservation. 
+
 - AI/ML models and large datasets should not be stored in the `/home`. Use `/clusterdata` or `/fast_disk` instead.
 
 - **Resources must be requested appropriately and not left idle.**
@@ -462,7 +464,7 @@ jupyter-lab --no-browser --port=${port} --ip=${node}
 
 ## VS-code jupyter extension
 
-In the sbatch script [jupyter_vscode.sbatch](./ollama.sbatch) I propose an upgraded version of the previous script.
+In the sbatch script [jupyter_vscode.sbatch](./jupyter_vscode.sbatch) I propose an upgraded version of the previous script.
 
 The differences are:
 - You can activate any personal conda environment
