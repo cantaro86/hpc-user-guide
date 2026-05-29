@@ -120,6 +120,28 @@ Host dgx-login
   IdentityFile ~/.ssh/id_rsa
 ```
 
+
+## Environment modules
+
+
+| Module name | Description | Example command |
+| --- | --- | --- |
+| `spack` | Enables the Spack package manager so users can inspect, install, and manage software packages. | `module load spack` |
+| `gcc14.2` | Loads GCC, G++, and GFortran version 14.2.0. | `module load gcc14.2` |
+| `llvm` | Loads `clang` and `clang++` version 21.1.4. | `module load llvm` |
+| `python3.x` | Loads Python 3.11, 3.12, 3.13 or 3.14 for running Python applications and creating virtual environments. | `module load python3.14` |
+| `conda` | Provides Conda for creating and managing Python environments and packages. | `module load conda` |
+| `ollama` | Provides the Ollama command-line tool for running and serving local large language models. | `module load ollama` |
+| `hpc-tools` | Loads a set of HPC development tools, including compiler, MPI, CUDA, build tools, and common libraries. | `module load hpc-tools` |
+| `nvhpc` | Loads the NVIDIA HPC SDK compilers and development tools. | `module load nvhpc` |
+| `singularity` | Provides Singularity or Apptainer for running containerized applications. | `module load singularity` |
+| `ai-storage` | Configures environment variables and paths used to access AI storage locations. | `module load ai-storage` |
+
+
+
+
+
+
 ## Using SLURM
 
 In order to use SLURM you need to load the module:
