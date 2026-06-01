@@ -10,41 +10,45 @@
 
 3. [Connecting via SSH](#connecting-via-ssh)
 
-4. [Using SLURM](#using-slurm)
+4. [Environment modules](#environment-modules)
+
+5. [Using SLURM](#using-slurm)
    - [salloc VS ssh](#salloc-vs-ssh)
    - [Use sjoin to connect to the compute nodes](#use-sjoin-to-connect-to-the-compute-nodes)
    - [QOS (unlock more GPUs)](#qos-unlock-more-gpus)
 
-5. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
+6. [Python virtual environment (venv)](#python-virtual-environment-venv)
+
+7. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
    - [PyTorch Module](#pytorch-module)
    - [EXAMPLE 1 (conda environment)](#example-1-conda-environment)
    - [EXAMPLE 2 (module)](#example-2-module)
    - [Activating a Conda Environment in an sbatch Script](#activating-a-conda-environment-in-an-sbatch-script)
 
-6. [JUPYTER](#jupyter)
+8. [JUPYTER](#jupyter)
    - [Jupyter Script](#jupyter-script)
    - [VS-code jupyter extension](#vs-code-jupyter-extension)
 
-7. [OLLAMA Module](#ollama-module)
+9. [OLLAMA Module](#ollama-module)
 
-8. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
+10. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
 
-9. [Singularity](#singularity)
+11. [Singularity](#singularity)
    - [OLLAMA container](#ollama-container)
    - [OLLAMA sbatch](#ollama-sbatch)
    - [SSH tunnel](#ssh-tunnel)
 
-10. [Tips](#tips)
+12. [Tips](#tips)
 
-11. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
+13. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
 
-12. [VS-code server](#vs-code-server)
+14. [VS-code server](#vs-code-server)
 
-13. [Storage information](#storage-information)
+15. [Storage information](#storage-information)
     - [Where do I save my data on /fast_disk?](#where-do-i-save-my-data-on-fast_disk)
     - [AI-storage module](#ai-storage-module) 
 
-14. [Network Topology](#network-topology)
+16. [Network Topology](#network-topology)
     - [Node IP Address Reference](#node-ip-address-reference)
     - [`/fast_disk` — BeeGFS Storage](#fast_disk--beegfs-storage)
     - [`/clusterdata` — NAS Storage (NFS v3)](#clusterdata--nas-storage-nfs-v3)
@@ -123,6 +127,38 @@ Host dgx-login
 
 ## Environment modules
 
+In HPC clusters, it's common to load applications via modules.    
+This makes it easier to select the application version you need. 
+If you need to use an application, first check if it's included in the modules. **Don't install it locally if already exists as a module**.
+
+You can list all the available modules with
+```bash
+module avail
+```
+and the modules you have already loaded with
+```bash
+module list
+```
+If you want to add a module you can run
+```bash
+module load <module_name>  
+# equivalent to
+module add <module_name>
+```
+
+If you want to unload the modules, you can run:
+```bash
+module unload <module_name>  
+module purge    # unload all the modules
+```
+
+For more information about the contents of a module use:
+```bash
+module whatis <module_name>
+```
+
+Some useful modules in our cluster are:
+
 
 | Module name | Description | Example command |
 | --- | --- | --- |
@@ -134,10 +170,19 @@ Host dgx-login
 | `ollama` | Provides the Ollama command-line tool for running and serving local large language models. | `module load ollama` |
 | `hpc-tools` | Loads a set of HPC development tools, including compiler, MPI, CUDA, build tools, and common libraries. | `module load hpc-tools` |
 | `nvhpc` | Loads the NVIDIA HPC SDK compilers and development tools. | `module load nvhpc` |
-| `singularity` | Provides Singularity or Apptainer for running containerized applications. | `module load singularity` |
+| `singularity` | Provides Singularity (or Apptainer) for running containerized applications. | `module load singularity` |
 | `ai-storage` | Configures environment variables and paths used to access AI storage locations. | `module load ai-storage` |
-
-
+| `eigen` | Loads Eigen C++ template library for linear algebra version 5.0.1 (header-only, works with any compiler). | `module load eigen/5.0.1` |
+| `boost` | Loads Boost C++ libraries version 1.89.0. | `module load boost/1.89.0` |
+| `cmake` | Loads CMake build system version 4.1.2. | `module load cmake/4.1.2` |
+| `hdf5-mpi` | Loads HDF5 data library version 1.14.6 with MPI support for parallel I/O. | `module load hdf5/1.14.6-mpi` |
+| `hdf5-serial` | Loads HDF5 data library version 1.14.6 without MPI (serial version). | `module load hdf5/1.14.6-serial` |
+| `ninja` | Loads Ninja build system version 1.13.0 compiled with GCC 14.2.0. | `module load ninja/1.13.0` |
+| `openmpi-cpu` | Loads OpenMPI version 5.0.9 CPU-only. | `module load openmpi/5.0.9-cpu` |
+| `openmpi-cuda` | Loads OpenMPI version 5.0.9 with CUDA and UCX support. | `module load openmpi/5.0.9-cuda-ucx` |
+| `cuda` | Loads NVIDIA CUDA Toolkit version 13.1.1 for GPU computing and CUDA development. It contains nvcc. | `module load cuda` |
+| `pytorch` | Loads PyTorch 2.7.0. This module is based on hpc-tools. | `module load pytorch` |
+| `pytorch-conda` | Loads the Conda environment containing PyTorch version 2.5.1. | `module load pytorch-conda` |
 
 
 
@@ -150,16 +195,58 @@ In order to use SLURM you need to load the module:
 module load slurm
 ```
 
-It is recommended to add this line to the `~/.bashrc` file.   
+It should be already inside your `~/.bashrc` file.
+If not already there, it is recommended to add it.    
 
-Always use the SLURM commands: `salloc` and `srun`:
+
+In order to use **slurm** you should be familiar with these commands:
 
 - `salloc` is used to allocate resources.
-- `srun` is used to launch jobs.
+- `squeue` is used to check running jobs.
+- `scancel` is used to cancel a running job.
+- `srun` is used to launch jobs on multiple nodes or processes.
+- `sbatch` is used to run sbatch scripts. 
 
-It is good practice to first use `salloc` with all the parameters for allocation and then `srun` to launch the jobs.
+**EXAMPLE 1:**
 
-EXAMPLE:
+Enter into a compute node with salloc:
+```bash
+user@hpchead01:~$ salloc
+salloc: Granted job allocation 186800
+salloc: Nodes dgx01 are ready for job
+user@dgx01:~$ 
+```
+
+In this example SLURM created a job allocation with `JOBID=186800`. 
+The details of your allocations can be viewed with the command:
+```bash
+squeue -u $USER
+```
+
+If you want to see all the allocated resources use simply
+
+```bash
+squeue
+```
+
+We can exit the allocation with
+
+```bash
+user@dgx01:~$ exit
+logout
+salloc: Relinquishing job allocation 186800
+user@hpchead01:~$ 
+```
+After the user exit from the `dgx01`, the allocation is automatically canceled. 
+In other cases (in particular when running sbatch jobs) the allocation can be cancelled with
+
+```bash
+scancel 186800
+```
+
+**EXAMPLE 2:**
+
+It is good practice to use `salloc` with all the main parameters for the allocation. 
 
 ```bash
 salloc --nodes=2 --ntasks=4 --time=00:15:00 --gres=gpu:1 --job-name="device_count"
@@ -167,27 +254,19 @@ salloc --nodes=2 --ntasks=4 --time=00:15:00 --gres=gpu:1 --job-name="device_coun
 
 The previous command reserves 2 nodes. On the reserved nodes, we are also requesting 4 parallel processes (`ntasks=4`) in total, i.e., 2 processes per node. In each node, we request 1 GPUs, so 2 in total.
 
-The information for this allocation can be viewed with `squeue`:
-
-```bash
-squeue -u $USER
-```
-
-To see all the allocated resources use simply
-
-```bash
-squeue
-```
-
 Now let's see how many GPUs PyTorch sees:
-
 ```bash
 module load pytorch
+python -c "import torch; print(torch.cuda.device_count())"
+1
+```
+The output is `1`, corresponding to the number of gpus we requested on each node with the option `--gres=gpu:1`. 
+
+Since we allocated two nodes and two processes per node, we can use `srun` before the command in this way: 
+```bash
 srun python -c "import torch; print(torch.cuda.device_count())"
 ```
-
 The output we get is:
-
 ```
 1
 1
@@ -195,15 +274,19 @@ The output we get is:
 1
 ```
 
-This is because we have 4 parallel processes, and in each node, PyTorch sees 1 GPUs.
+This is because we have 4 parallel processes (2 processes per node), and in each node, PyTorch sees 1 GPUs.
 
-Once you have finished working, it may be necessary to free the allocated space.    
-If you allocated with `salloc`, you can simply type `exit`. 
-If you used a `sbatch` script ([example below](#jupyter-script)), you can kill your allocation with the command `scancel` followed by the `JOBID`.
 
-```bash
-scancel $SLURM_JOB_ID
-```
+**Sbatch script**
+    
+All the bash commands you can run inside a salloc session, can be written inside a script. This kind of script is called `sbatch scripts`.    
+A sbatch script runs in the background and all the output is redirected into the `.log` and `.err` files, defined at the beginning of the script.   
+It is common to name a sbatch script with extensions like `script.sh` or `script.sbatch`.    
+The same allocation options we can use with `salloc` can be used inside the sbatch script. Allocation instructions must be preceded by `#SBATCH` and must be one per line. 
+
+For an example of a `sbatch` script see the [example below](#jupyter-script).
+
+
 
 ## salloc VS ssh
 
@@ -216,7 +299,7 @@ Using the command:
 salloc -N 2
 ```
 you allocate two nodes, but the login is only into the first node (in our case to `dgx01`).   
-Using `salloc` is better than using `srun --pty /bin/bash` because it allows you to launch repeated `srun` commands within the allocation (mainly for multi-node allocation).
+Using `salloc` is better than using `srun --pty /bin/bash` because it allows you to launch repeated `srun` commands within the allocation (only for multi-node allocation).
 
 Once a node is allocated with `salloc` or by submitting a `sbatch` script, it is possible to connect to it from another terminal via `ssh`.  
 
@@ -280,7 +363,9 @@ sacctmgr show assoc where user=$USER
 By default, each user can access *normal* QOS, which allows them to request up to 2 GPUs.   
 The *mira* QOS is reserved for people working the MIRA project, has a limit of 4 GPUs.
 
-Let's see an example:
+Let's see an 
+
+**EXAMPLE:**
 
 If you request for instance 3 GPUs with `salloc --gpus=3`. The request will be denied.    
 Only if your account belongs to the *mira* project, you can add the option `--qos=mira` and request more GPUs: 
@@ -326,6 +411,45 @@ Do you need many GPUs with no interruption? Please, ask the administrator for a 
 -----------------------------
 
 
+## Python virtual environment (venv)
+
+It is strongly recommended to use virtual environments.    
+Python packages installed outside virtual environments are a source of troubles!
+
+EXAMPLE:
+
+The system python is an old version.
+```bash
+user@hpchead01:~$ which python
+/usr/bin/python
+user@hpchead01:~$ python --version
+Python 3.10.12
+```
+
+It is better to create a virtual environment on top of a more recent python version.    
+We can achieve that by loading the module of the python version we want to use.    
+In the following example I am using python 3.14:
+
+```bash
+module load python3.14
+python --version
+```
+
+```bash
+python -m venv --prompt <the_name_you_like> ${PWD}/python-venv
+source ${PWD}/python-venv/bin/activate
+which python
+```
+
+You can see that the python binaries are inside the just created virtual environment.   
+
+You deactivate the virtual environment with the command
+```bash
+deactivate
+```
+
+
+
 ## ANACONDA and PYTORCH
 
 To use Anaconda, you need to load the appropriate module:
@@ -340,17 +464,17 @@ To see the existing virtual environments, use:
 conda env list
 ```
 
-Currently, there are several system virtual environments (`base`, `pytorch-2.5.1`, and `ultralytics`).    
+Currently, there are a few system virtual environments (`base`, and `pytorch-2.5.1`).    
 Do **not** use `base`.     
-The `pytorch-2.5.1` environment contains the main packages needed to work with Python 3.12. The `ultralytics` environment uses Python 3.11. To add packages to an environment, contact the system administrators.
+The `pytorch-2.5.1` environment contains the main packages needed to work with Python 3.12. 
+
+If you need to create a new system environment, in case your group needs a shared environment, contact the system administrators.
 
 Alternatively, you can create local environments using the command:
 
 ```bash
 conda create -n environment1 python=3.12
 ```
-
-It is recommended to use the system environments to avoid taking up too much space (each environment with PyTorch occupies several GB).
 
 You can remove a local conda environment with: 
 
@@ -361,28 +485,14 @@ conda remove -n environment1 --all
 
 ### PyTorch Module
 
-Alternatively, you can use modules:
+Alternatively, you can use the module:
 
 ```bash
 module load pytorch-conda
 ```
 
 This module uses the same `pytorch-2.5.1` virtual environment as Anaconda.      
-Modules based on Anaconda virtual environments follow a naming convention of the type `<environment_name>-conda`.
-
-This means that at the moment there are the following modules:    
-`pytorch-conda`, `ultralytics-conda`.      
-
-You can list all the available modules with
-
-```
-module avail
-```
-and the module you already loaded with
-```
-module list
-```
-If you want to unload all the modules, you can run a `module purge`.
+Modules based on Anaconda virtual environments follow a naming convention of the type `<environment_name>-conda`.      
 
 When using the module, it is NOT necessary to activate the virtual environment with    
 `conda activate <environment_name>`.
@@ -402,19 +512,18 @@ python
 ### EXAMPLE 2 (module):
 
 ```bash
-salloc -N 1 --time=00:15:00 --qos=mira --gres=gpu:3 --job-name="torch_test"
+salloc -N 1 --time=00:15:00 --qos=normal --gres=gpu:2 --job-name="torch_test"
 module load pytorch-conda
 python
 >>> import torch
->>> torch.cuda.device_count()          # output 3
+>>> torch.cuda.device_count()          # output 2
 >>> exit()
 ```
 
 ### Activating a Conda Environment in an sbatch Script
 
-Within an `sbatch` script, it is easier to activate a Conda environment by loading the corresponding module, e.g., with `module load pytorch-conda`.
 
-If you want to load an environment for which the associated module does not exist, you need to do this:
+If you want to load a Conda environment you need to do this:
 
 ```
 module load conda
@@ -428,7 +537,7 @@ The command with `eval` is used to initialize Conda in the bash shell and be abl
 
 The Jupyter package is installed in the `pytorch-2.5.1` Conda environment.
 
-Create a text file and name it `jupyter.sbatch`. Paste the script at the bottom of the paragraph inside it.
+Create a text file and name it `jupyter.sbatch`. Copy/paste the script at the bottom of the paragraph inside it.
 
 Launch the script and open the generated log file.
 
@@ -550,6 +659,17 @@ echo $OLLAMA_MODELS
 
 
 ## Other modules for HPC and pytorch
+
+
+### Cuda
+
+With 
+```bash
+module load cuda
+```
+
+you can use the NVIDIA CUDA Toolkit version 13.1.1, with the `nvcc` compiler.
+
 
 ### hpc-tools
 
@@ -760,20 +880,6 @@ alias ssqueue='squeue -o "%i %u %P %T %b %D %C %m %N"'
 
 With this command we can see how many GPUs are being used.
 
-### VScode create venv
-
-If you want to create a virtual environment on top of a module, **do not** use VScode, but use the command line.
-
-For example:
-```bash
-module load pytorch
-python -m venv --prompt the_name_you_like ${PWD}/python-venv
-source ${PWD}/python-venv/bin/activate
-which python
-```
-
-This approach is good to save space. But you need to load the module every time before you activate the environment.
-If you do it in reverse order, there may be bugs.
 
 
 
@@ -821,19 +927,21 @@ We can debug the program `cuda_checker.py` defined few sections above.
 salloc --job-name="debug" --nodes=1 --ntasks-per-node=1 --cpus-per-task=2 --gpus-per-node=2 --time=00:45:00
 ```
 
-#### 2) Create a python venv on top of the pytorch module:
+#### 2) Create a python venv:
+**If you already have an existing virtual environment, skip this point.**
 
 ```bash
 module load pytorch
 python -m venv --prompt the_name_you_like ${PWD}/python-venv
 source ${PWD}/python-venv/bin/activate
 ```
+An alternative would be to create and activate a conda environment.   
+Or to use the system environments `pytorch-2.5.1` already containing debugpy.
 
-An alternative would be to create and activate a conda environment. Or to use the system environments: `pytorch-2.5.1` or `ultralytics`.
-
-**If you already have an existing virtual environment, skip this point.**
 
 #### 3) Install `debugpy`:
+
+**If `debugpy` is already in your venv, skip this part.**
 
 ```bash
 pip install debugpy
@@ -843,9 +951,6 @@ Or
 ```bash
 conda install debugpy
 ```
-
-**If you have already a virtual env with `debugpy`, skip this part.**
-
 
 #### 4) Run the program:
 
