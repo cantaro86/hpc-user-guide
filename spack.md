@@ -119,7 +119,7 @@ spack load --sh fmt   # Shows all env vars it would set
  # Local package installation (advanced C++ example)
 
 Let us create a small C++ project in the folder `~/spack_tests/dev-source`:   
-It contains these files:
+It contains the files `hello_openmp.cpp` and `CMakeLists.txt`:
 
 ```c++
 // hello_openmp.cpp
@@ -139,6 +139,7 @@ int main() {
 ```
 and
 ```cmake
+# CMakeLists.txt
 cmake_minimum_required(VERSION 3.22)
 
 project(hello_openmp LANGUAGES CXX)
@@ -227,18 +228,20 @@ spack repo list
 spack info hello-openmp
 ```
 
-### Create a spack independent env
+### Create a spack independent environment
 
 ```bash
 # Create environment
 mkdir -p ~/spack_tests/hello-env
 cd ~/spack_tests/hello-env
 spack env create -d .
-spack env activate .
+spack env activate -p .
 ```
 
 You can check that the independent environment is active with:
 ```bash
+spack env status
+# or
 echo $SPACK_ENV
 ```
 
@@ -258,13 +261,21 @@ spack develop --path ~/spack_tests/dev-source hello-openmp@main
 spack concretize -f
 ```
 
+The content of the `~/spack_tests/hello-env/spack.yaml` file inside can be edited with 
+```bash
+spack edit config
+```
+You can also edit the `spack.yaml` file directly instead of using the `spack add` and `spack remove` commands.   
+The **specs** in this file are the list of package specs to install in the environment.
+
+
 You can see the concretized package with 
 ```bash
 spack find -c
 ```
 
 Spack develop only works in an active environment.   
-After that we can build the project:
+After that we can **build the project** with:
 ```bash
 cd ~/spack_tests/dev-source
 spack dev-build hello-openmp@main
