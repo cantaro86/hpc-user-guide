@@ -46,7 +46,7 @@ spack compiler find /cm/shared/apps/gcc-14
 spack compilers
 ```
 
-## Example: install and use fmt
+## Example: install and use the C++ library fmt
 
 After the files are in place, users can test the setup with:
 
@@ -109,3 +109,242 @@ you can see them with
 ```bash
 spack load --sh fmt   # Shows all env vars it would set
 ```
+
+
+## Spack environments
+
+ Spack environments are similar to virtual environments in other package managers (e.g., Python venv, Conda Environments).
+
+
+ # Local package installation (advanced C++ example)
+
+Let us create a small C++ project in the folder `~/spack_tests/dev-source`:   
+It contains these files:
+
+```c++
+// hello_openmp.cpp
+#include <fmt/core.h>
+#include <omp.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+#pragma omp parallel num_threads(4)
+    {
+        fmt::print("Hello World... from thread = {} of total {} threads\n", omp_get_thread_num(),
+               omp_get_num_threads());
+    }
+    return 0;
+}
+```
+and
+```cmake
+cmake_minimum_required(VERSION 3.22)
+
+project(hello_openmp LANGUAGES CXX)
+
+
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "Install prefix" FORCE)
+endif()
+ 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_CONFIGURATION_TYPES Debug Release CI CACHE STRING "Choose the type of build." FORCE)
+set(CMAKE_CXX_FLAGS_CI "-O2 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined")
+set(CMAKE_C_FLAGS_CI "-O2 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined")
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE CI CACHE STRING "Build type" FORCE)
+endif()
+
+message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
+message(STATUS "Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Generator: ${CMAKE_GENERATOR}")
+
+add_executable(${PROJECT_NAME} hello_openmp.cpp)
+
+find_package(OpenMP REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        OpenMP::OpenMP_CXX
+        fmt::fmt
+)
+
+# Installation rules
+include(GNUInstallDirs)
+
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+```
+
+### Create a spack repo
+
+```bash
+# Create and register repo
+mkdir -p ~/.spack/package_repos/myrepo/packages/hello-openmp
+cat > ~/.spack/package_repos/myrepo/repo.yaml <<'EOF'
+repo:
+  namespace: myrepo
+EOF
+spack repo add ~/.spack/package_repos/myrepo
+```
+
+The file `~/.spack/package_repos/myrepo/packages/hello-openmp/package.py` contains this:
+```python
+from spack.package import *
+
+class HelloOpenmp(CMakePackage):
+    """A simple Hello World OpenMP example with fmt library"""
+
+    homepage = "https://github.com/yourusername/hello_openmp"
+    version("main")
+
+    # Build dependencies
+    depends_on("cmake@4.1.1:", type="build")
+    depends_on("ninja", type="build")
+
+    # Runtime dependencies
+    depends_on("fmt")
+
+    def cmake_args(self):
+        """Configure CMake arguments"""
+        return [
+            self.define("CMAKE_CXX_STANDARD", "20"),
+        ]
+```
+For a Spack package named `hello-openmp`, Spack expects the class name to match the package name converted to CamelCase. In practice, `hello-openmp` maps to `HelloOpenmp`.
+
+We can see the repo and some details with 
+```bash
+spack repo list
+spack info hello-openmp
+```
+
+### Create a spack independent env
+
+```bash
+# Create environment
+mkdir -p ~/spack_tests/hello-env
+cd ~/spack_tests/hello-env
+spack env create -d .
+spack env activate .
+```
+
+You can check that the independent environment is active with:
+```bash
+echo $SPACK_ENV
+```
+
+After activation, register compilers
+
+```bash
+spack compiler find
+spack compiler list
+```
+
+Add your package and mark it as a development source tree:
+
+```bash
+# Add package and point to local sources
+spack add hello-openmp@main %gcc
+spack develop --path ~/spack_tests/dev-source hello-openmp@main
+spack concretize -f
+```
+
+You can see the concretized package with 
+```bash
+spack find -c
+```
+
+Spack develop only works in an active environment.   
+After that we can build the project:
+```bash
+cd ~/spack_tests/dev-source
+spack dev-build hello-openmp@main
+```
+
+### Run the installed package
+
+The program was installed in the folder:
+
+```bash
+spack location -i hello-openmp@main
+```
+
+We can load and run the program with:
+```bash
+spack load hello-openmp
+hello_openmp
+```
+
+### Enter the build environment
+
+Sometimes it may be helpful to enter the build environment
+```bash
+spack build-env hello-openmp@main bash --norc
+```
+
+
+### Uninstall
+
+```bash
+spack find -lv hello-openmp@main
+
+spack uninstall hello-openmp@main
+# or
+spack uninstall /<hash>
+```
+
+The build directory can be deleted manually
+
+```bash
+rm -rf ~/spack_tests/dev-source/build-linux-ubuntu22.04-cascadelake-66svhxl/
+``` 
+
+
+### Rebuild
+
+If modifications are made in the package.py file, you need to reconcretize the environment: 
+
+```bash
+# Uninstall first
+spack uninstall hello-openmp@main
+
+# Remove and re-add spec
+spack remove hello-openmp@main
+spack add hello-openmp@main %gcc@14.2.0
+
+# Reconcretize
+spack concretize -f
+```
+
+```bash
+# Clean the build folder
+spack clean hello-openmp
+spack dev-build hello-openmp@main
+```
+
+
+
+###  Extra 
+
+If you want to change generator and build type:
+
+```bash
+# Remove old installation
+spack uninstall hello-openmp@main
+
+# Add with new variants
+spack add hello-openmp@main generator=ninja build_type=Debug
+
+# Rebuild
+spack concretize -f
+spack install hello-openmp@main
+``` 
