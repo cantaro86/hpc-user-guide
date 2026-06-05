@@ -46,7 +46,7 @@ spack compiler find /cm/shared/apps/gcc-14
 spack compilers
 ```
 
-## Example: install and use the C++ library fmt
+# Example: install and use the C++ library fmt
 
 After the files are in place, users can test the setup with:
 
@@ -111,12 +111,65 @@ spack load --sh fmt   # Shows all env vars it would set
 ```
 
 
-## Spack environments
+# Spack environments
 
  Spack environments are similar to virtual environments in other package managers (e.g., Python venv, Conda Environments).
 
+ ```bash
+spack env create myproject          # creates in ~/.spack/environments/myproject/
+spack env list                                # list of user's environments
+spack env activate -p myproject   # activate environment
 
- # Local package installation (advanced C++ example)
+spack env deactivate # or despacktivate
+spack env remove myproject
+ ```
+
+
+ # Package example: python
+
+Let us create a repo with the namespace `python_namespace` and it to the config file `repo.yaml`.
+```bash
+cd ~/.spack/package_repos
+spack repo create ./repo_python python_namespace
+spack repo add ./repo_python/spack_repo/python_namespace
+
+spack repo list
+```
+
+### Create a simple example python project
+
+```
+module load python3.14
+cd ~/spack_tests/hpc-hello
+
+python3.14 -m venv .venv-build
+source .venv-build/bin/activate
+python -m pip install -U pip build wheel setuptools
+python -m build --sdist
+deactivate
+```
+
+sha256sum dist/hpc_hello-0.1.0.tar.gz
+It may be useful to define  
+version("1.0.0", sha256="ffeed6ef9e377983850fbb0c0d86cf180eb3bb8bf7eddccb4c499856541382f7")
+
+spack create ~/spack_tests/hpc-hello/dist/hpc_hello-0.1.0.tar.gz
+
+spack edit hpc_hello
+
+Use # class PyHpcHello(PythonPackage):
+If you are treating this as a Spack Python package, the Spack package name should generally be  py-hpc-hello , and the class should be  PyHpcHello . 
+
+
+spack env create hpc-hello-env
+spack env activate -p hpc-hello-env
+
+
+hpc-hello --name Nicola
+
+
+
+# Local package installation (advanced C++ example)
 
 Let us create a small C++ project in the folder `~/spack_tests/dev-source`:   
 It contains the files `hello_openmp.cpp` and `CMakeLists.txt`:
@@ -184,6 +237,23 @@ install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 ```
+
+Normally you can compile the previous C++ program with
+```bash
+# gcc  
+g++ -std=c++20 -fopenmp hello_openmp.cpp -o hello_openmp $(pkg-config --cflags --libs fmt) 
+# clang
+clang++ -std=c++20 -fopenmp hello_openmp.cpp -o hello_openmp $(pkg-config --cflags --libs fmt) 
+````
+
+Or build and install a project with `cmake`. Inside the project folder:
+```bash
+cd ./build
+cmake -GNinja ..
+cmake --build .
+cmake --install .
+```
+
 
 ### Create a spack repo
 
