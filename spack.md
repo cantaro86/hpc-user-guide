@@ -1,7 +1,24 @@
 # Spack guide
 
+## Table of contents
 
-## Local spack settings
+- [Local spack settings](#local-spack-settings)
+- [Example: install and use the C++ library fmt](#example-install-and-use-the-c-library-fmt)
+- [Spack environments](#spack-environments)
+- [Package example: simple python package](#package-example-simple-python-package)
+  - [Build the python project](#build-the-python-project)
+  - [Install the package inside a spack environment](#install-the-package-inside-a-spack-environment)
+  - [Additional information](#additional-information)
+- [Local package installation (advanced C++ example)](#local-package-installation-advanced-c-example)
+  - [Create a spack repo](#create-a-spack-repo)
+  - [Create a spack independent environment](#create-a-spack-independent-environment)
+  - [Run the installed package](#run-the-installed-package)
+  - [Enter the build environment](#enter-the-build-environment)
+  - [Uninstall](#uninstall)
+  - [Rebuild](#rebuild)
+  - [Extra](#extra)
+
+# Local spack settings
 
 Users can install software with the centrally provided Spack without needing root privileges, as long as new builds, caches, and bootstrap files are written in the user’s home directory instead of the shared system tree.    
 The shared Spack packages can remain read-only in  `/cm/shared/apps/spack-packages`, while user-installed software goes under `~/.spack`.   
@@ -149,7 +166,7 @@ This is the structure of the repo:
 ```
 
 
-## Create a simple example python project
+## Build the python project
 
 
 The structure of the project is the following:
