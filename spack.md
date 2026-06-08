@@ -18,6 +18,11 @@
   - [Rebuild](#rebuild)
   - [Extra](#extra)
 
+
+
+<br><br>
+
+
 # Local spack settings
 
 Users can install software with the centrally provided Spack without needing root privileges, as long as new builds, caches, and bootstrap files are written in the user’s home directory instead of the shared system tree.    
@@ -62,6 +67,8 @@ spack compiler find /cm/shared/apps/gcc-14
 # we can see the compilers with
 spack compilers
 ```
+
+<br><br>
 
 # Example: install and use the C++ library fmt
 
@@ -127,6 +134,7 @@ you can see them with
 spack load --sh fmt   # Shows all env vars it would set
 ```
 
+<br><br>
 
 # Spack environments
 
@@ -146,6 +154,7 @@ spack env remove myproject
  ```
 
 
+<br><br>
  # Package example: simple python package
 
 Let us create a repo with the namespace `python_namespace` and add it to the namespace (i.e. it creates the repo.yaml file):
@@ -302,7 +311,7 @@ spack concretize --force
 ```
 
 
-
+<br><br>
 
 # Local package installation (advanced C++ example)
 

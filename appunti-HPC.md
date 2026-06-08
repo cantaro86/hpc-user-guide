@@ -54,7 +54,11 @@
     - [`/clusterdata` — NAS Storage (NFS v3)](#clusterdata--nas-storage-nfs-v3)
     - [Storage Bandwidth Summary](#storage-bandwidth-summary)
 
+17. [Packages with spack](#packages-with-spack)
 
+
+
+<br><br>
 
 ## Cluster Overview and Usage Policy
 
@@ -64,6 +68,8 @@ The HPC cluster is composed of:
 - Login node (hpchead01): used for SSH access, job submission (SLURM), file management, and lightweight operations.
 
 - 2 DGX compute nodes (dgx01 and dgx02): GPU-enabled nodes dedicated to all computational workloads (e.g., large simulations, machine learning, data analysis).
+
+<br><br>
 
 ### Usage Rules:
 
@@ -89,10 +95,14 @@ If you won’t use the model for many hours (e.g., overnight), please quit your 
 
 If you have doubts or questions, please contact the administrator.
 
+<br><br>
+
 ## Contacts
 
 - Mailing list: hpc@uniudamce.onmicrosoft.com
 
+
+<br><br>
 
 ## Connecting via SSH
 
@@ -124,6 +134,8 @@ Host dgx-login
   IdentityFile ~/.ssh/id_rsa
 ```
 
+
+<br><br>
 
 ## Environment modules
 
@@ -186,6 +198,7 @@ Some useful modules in our cluster are:
 
 
 
+<br><br>
 
 ## Using SLURM
 
@@ -287,6 +300,7 @@ The same allocation options we can use with `salloc` can be used inside the sbat
 For an example of a `sbatch` script see the [example below](#jupyter-script).
 
 
+<br><br>
 
 ## salloc VS ssh
 
@@ -344,6 +358,7 @@ sjoin 185888 dgx02,
 to open a shell on the selected allocated node.
 
 
+<br><br>
 
 ## QOS (unlock more GPUs)
 
@@ -411,6 +426,8 @@ Do you need many GPUs with no interruption? Please, ask the administrator for a 
 -----------------------------
 
 
+<br><br>
+
 ## Python virtual environment (venv)
 
 It is strongly recommended to use virtual environments.    
@@ -449,6 +466,7 @@ deactivate
 ```
 
 
+<br><br>
 
 ## ANACONDA and PYTORCH
 
@@ -533,6 +551,9 @@ conda activate <local_environment>
 
 The command with `eval` is used to initialize Conda in the bash shell and be able to activate the environments.
 
+
+<br><br>
+
 ## JUPYTER
 
 The Jupyter package is installed in the `pytorch-2.5.1` Conda environment.
@@ -593,6 +614,9 @@ Use a Browser on your local machine and paste the address in the output below:
 jupyter-lab --no-browser --port=${port} --ip=${node}
 ```
 
+
+<br><br>
+
 ## VS-code jupyter extension
 
 In the sbatch script [jupyter_vscode.sbatch](./jupyter_vscode.sbatch) I propose an upgraded version of the previous script.
@@ -629,6 +653,9 @@ VS-code automatically saves the URL for the next use.
 
 ---------------------------
 
+
+<br><br>
+
 ## OLLAMA Module
 
 For using ollama you can load the relevant module as follows:
@@ -657,6 +684,8 @@ The models are saved in this path:
 echo $OLLAMA_MODELS 
 ```
 
+
+<br><br>
 
 ## Other modules for HPC and pytorch
 
@@ -706,6 +735,7 @@ For the HPC libraries of CUDA (NVIDIA HPC SDK), use the module:
 module load nvhpc
 ```
 
+<br><br>
 
 ## Singularity
 
@@ -856,6 +886,7 @@ Reminder:
 
 ----------------------------------------------------------------------------------------------------------------------------
 
+<br><br>
 
 ## Tips
 
@@ -882,6 +913,7 @@ With this command we can see how many GPUs are being used.
 
 
 
+<br><br>
 
 ## Debug python program on the compute node with VS Code
 
@@ -976,6 +1008,7 @@ Set some breakpoints and run the debugger.
 If you need to run multiple times, just repeat points (4) and (6). No need to create the ssh tunnel multiple times.
 
 
+<br><br>
 
 ## VS-code server
 
@@ -1008,6 +1041,7 @@ Paste the following code:
 
 
 
+<br><br>
 
 ## Storage information
 
@@ -1128,6 +1162,8 @@ The folders of `/fast_disk/datasets/{videos,photos,text,numerical}` are optimize
 
 --------------------------
 
+<br><br>
+
 ### AI-storage module
 
 ```bash
@@ -1144,6 +1180,7 @@ TORCH_HOME:            /fast_disk/models/torch
 
 ---------------------------
 
+<br><br>
 
 ## Network Topology
 
@@ -1210,3 +1247,15 @@ The cluster uses three distinct networks with different roles.
 | `/clusterdata` | 100 GbE RoCE (bond1)    | Ethernet 1 GbE (eno2)  | 200 Gbps            |
 | `/home`        | Ethernet 1 GbE (eno3)   | Ethernet 1 GbE (eno2)  | 1 Gbps              |
 | `/cm/shared`   | Ethernet 1 GbE (eno3)   | Ethernet 1 GbE (eno2)  | 1 Gbps              |
+
+
+
+<br><br>
+
+# Packages with spack
+
+[Spack](https://spack.io/) is a package manager for supercomputers, Linux, macOS, and Windows. It makes installing scientific software easy inside dedicated virtual environments.
+
+This is a tool for advanced users. Here is our internal tutorial [spack guide](./spack.md).
+
+For advanced package development, I recommend reading the [packages creation tutorial](https://spack-tutorial.readthedocs.io/en/latest/tutorial_packaging.html). 
