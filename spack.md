@@ -119,15 +119,20 @@ spack load --sh fmt   # Shows all env vars it would set
 spack env create myproject          # creates in ~/.spack/environments/myproject/
 spack env list                                # list of user's environments
 spack env activate -p myproject   # activate environment
+# equivalent to 
+spacktivate myproject
+
+spack env status              # check the status of the environment
 
 spack env deactivate # or despacktivate
 spack env remove myproject
  ```
 
 
- # Package example: python
+ # Package example: simple python package
 
-Let us create a repo with the namespace `python_namespace` and it to the config file `repo.yaml`.
+Let us create a repo with the namespace `python_namespace` and add it to the namespace (i.e. it creates the repo.yaml file):
+
 ```bash
 cd ~/.spack/package_repos
 spack repo create ./repo_python python_namespace
@@ -136,9 +141,73 @@ spack repo add ./repo_python/spack_repo/python_namespace
 spack repo list
 ```
 
-### Create a simple example python project
+This is the structure of the repo:
+```
+~/.spack/package_repos/repo_python/spack_repo/python_namespace/
+├── repo.yaml
+└── packages/
+```
+
+
+## Create a simple example python project
+
+
+The structure of the project is the following:
 
 ```
+~/spack_tests/hpc-hello
+├── pyproject.toml
+├── src/
+│   └── hpc_hello/
+│       ├── __init__.py
+│       └── cli.py
+```
+
+We create the file `pyproject.toml` containing:
+
+```toml
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hpc-hello"
+version = "0.1.0"
+description = "A simple HPC greeting utility"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "click>=8.0",
+]
+
+[project.scripts]
+hpc-hello = "hpc_hello.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+```
+
+And the files:
+
+```python
+# cli.py
+import click
+
+@click.command()
+@click.option("--name", default="HPC user", help="Name to greet")
+def main(name):
+    """Simple HPC greeting CLI."""
+    click.echo(f"Hello, {name}! Your cluster is ready.")
+```
+
+```python
+# __init__.py
+__version__ = "0.1.0"
+```
+
+After that, we can build a tarball inside a pip venv, and and compute its sha256:
+
+```bash
 module load python3.14
 cd ~/spack_tests/hpc-hello
 
@@ -147,25 +216,74 @@ source .venv-build/bin/activate
 python -m pip install -U pip build wheel setuptools
 python -m build --sdist
 deactivate
-```
 
 sha256sum dist/hpc_hello-0.1.0.tar.gz
-It may be useful to define  
-version("1.0.0", sha256="ffeed6ef9e377983850fbb0c0d86cf180eb3bb8bf7eddccb4c499856541382f7")
+```
 
+At this point we can create the recipe for our package with the command:
+```bash 
 spack create ~/spack_tests/hpc-hello/dist/hpc_hello-0.1.0.tar.gz
 
 spack edit hpc_hello
+```
+The generated template may be quite general and not specific for a python package. The resulting recipe file should be like this:
 
-Use # class PyHpcHello(PythonPackage):
-If you are treating this as a Spack Python package, the Spack package name should generally be  py-hpc-hello , and the class should be  PyHpcHello . 
+```python
+# ~/.spack/package_repos/repo_python/spack_repo/python_namespace/packages/hpc_hello/package.py
+from spack_repo.builtin.build_systems.python import PythonPackage
+from spack.package import *
+
+class HpcHello(PythonPackage):
+    """A simple HPC greeting utility."""
+
+    homepage = "https://www.example.com"
+    url = "file://~/spack_tests/hpc-hello/dist/hpc_hello-0.1.0.tar.gz"
+
+    version("0.1.0", sha256="98388534d22b389be2098669a10913e14a7627762fddfcfbb8ac7becc3a9213a")
+
+    build_system("python_pip")
+    
+    depends_on("python@3.14:", type=("build", "run"))
+    depends_on("py-setuptools@65:", type="build")
+    depends_on("py-wheel", type="build")
+    depends_on("py-click@8:", type=("build", "run"))
+    depends_on("py-pip", type="build")
+```
+
+### Install the package inside a spack environment
 
 
+```bash
 spack env create hpc-hello-env
-spack env activate -p hpc-hello-env
-
+spacktivate hpc-hello-env
+spack install --add hpc-hello
+# This is equivalent to
+# spack add hpc-hello
+# spack install hpc-hello
 
 hpc-hello --name Nicola
+``` 
+
+And it should work!
+
+### Additional information
+
+- After creating a spack environment, you can manually select the spec inside the file `.spack/environments/hpc-hello-env/spack.yaml` and install them with the command `spack install`. 
+
+
+- If you edit the recipe `package.py` it may be helpful to clean the cache:
+```bash
+find ~/.spack/package_repos -name "*.pyc" -delete
+find ~/.spack/package_repos -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null
+spack clean -a
+``` 
+and sometimes to concretize again:
+```bash
+cd ~/.spack/environments/hpc-hello-env
+rm spack.lock
+spack concretize --force
+```
+
 
 
 
