@@ -19,43 +19,48 @@
 
 6. [Python virtual environment (venv)](#python-virtual-environment-venv)
 
-7. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
+7. [UV](#uv)
+
+8. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
    - [PyTorch Module](#pytorch-module)
    - [EXAMPLE 1 (conda environment)](#example-1-conda-environment)
    - [EXAMPLE 2 (module)](#example-2-module)
    - [Activating a Conda Environment in an sbatch Script](#activating-a-conda-environment-in-an-sbatch-script)
 
-8. [JUPYTER](#jupyter)
+9. [JUPYTER](#jupyter)
    - [Jupyter Script](#jupyter-script)
    - [VS-code jupyter extension](#vs-code-jupyter-extension)
 
-9. [OLLAMA Module](#ollama-module)
+10. [OLLAMA Module](#ollama-module)
 
-10. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
+11. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
 
-11. [Singularity](#singularity)
+12. [Singularity](#singularity)
    - [OLLAMA container](#ollama-container)
    - [OLLAMA sbatch](#ollama-sbatch)
    - [SSH tunnel](#ssh-tunnel)
 
-12. [Tips](#tips)
+13. [Tips](#tips)
 
-13. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
+14. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
 
-14. [VS-code server](#vs-code-server)
+15. [VS-code server](#vs-code-server)
 
-15. [Storage information](#storage-information)
+16. [Storage information](#storage-information)
     - [Where do I save my data on /fast_disk?](#where-do-i-save-my-data-on-fast_disk)
     - [AI-storage module](#ai-storage-module) 
 
-16. [Network Topology](#network-topology)
+17. [Network Topology](#network-topology)
     - [Node IP Address Reference](#node-ip-address-reference)
     - [`/fast_disk` — BeeGFS Storage](#fast_disk--beegfs-storage)
     - [`/clusterdata` — NAS Storage (NFS v3)](#clusterdata--nas-storage-nfs-v3)
     - [Storage Bandwidth Summary](#storage-bandwidth-summary)
 
-17. [Packages with spack](#packages-with-spack)
+18. [Packages with spack](#packages-with-spack)
 
+19. [Apache Airflow](#apache-airflow)
+
+20. [AI-tools (opencode)](#ai-tools)
 
 
 <br><br>
@@ -175,6 +180,7 @@ Some useful modules in our cluster are:
 | Module name | Description | Example command |
 | --- | --- | --- |
 | `spack` | Enables the Spack package manager so users can inspect, install, and manage software packages. | `module load spack` |
+| `uv` | Fast Python package/project manager (pip, venv & project management replacement). | `module load uv` |
 | `gcc14.2` | Loads GCC, G++, and GFortran version 14.2.0. | `module load gcc14.2` |
 | `llvm` | Loads `clang` and `clang++` version 21.1.4. | `module load llvm` |
 | `python3.x` | Loads Python 3.11, 3.12, 3.13 or 3.14 for running Python applications and creating virtual environments. | `module load python3.14` |
@@ -195,7 +201,8 @@ Some useful modules in our cluster are:
 | `cuda` | Loads NVIDIA CUDA Toolkit version 13.1.1 for GPU computing and CUDA development. It contains nvcc. | `module load cuda` |
 | `pytorch` | Loads PyTorch 2.7.0. This module is based on hpc-tools. | `module load pytorch` |
 | `pytorch-conda` | Loads the Conda environment containing PyTorch version 2.5.1. | `module load pytorch-conda` |
-
+| `airflow` | ... | `module load airflow` |
+| `ai-tools` | ... | `module load ai-tools` |
 
 
 <br><br>
@@ -463,6 +470,33 @@ You can see that the python binaries are inside the just created virtual environ
 You deactivate the virtual environment with the command
 ```bash
 deactivate
+```
+
+
+<br><br>
+
+## UV
+
+To use `uv` you need to load the module
+
+```
+module load uv
+````
+This also sets the env variable `UV_PYTHON_PREFERENCE=only-system` that lets you use only interpreters already on PATH, and it never downloads new python.
+You can add the python version you want to the PATH by loading the respective module.
+
+You can inspect the available interpreters with
+```
+uv python list
+```
+
+Information about the python interpreter: 
+```bash
+>> module load python 3.14
+>> uv run python -V
+Python 3.14.2
+>> uv run which python
+/cm/shared/apps/spack-packages/linux-cascadelake/python-3.14.2-r2pij3phvmh7dxantmbsha46qln2xtxp/bin/python
 ```
 
 
@@ -1259,3 +1293,18 @@ The cluster uses three distinct networks with different roles.
 This is a tool for advanced users. Here is our internal tutorial [spack guide](./spack.md).
 
 For advanced package development, I recommend reading the [packages creation tutorial](https://spack-tutorial.readthedocs.io/en/latest/tutorial_packaging.html). 
+
+***
+
+<br><br>
+
+# Apache Airflow
+
+
+
+***
+
+<br><br>
+
+# AI-tools
+
