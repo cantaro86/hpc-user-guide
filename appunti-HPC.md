@@ -201,7 +201,7 @@ Some useful modules in our cluster are:
 | `cuda` | Loads NVIDIA CUDA Toolkit version 13.1.1 for GPU computing and CUDA development. It contains nvcc. | `module load cuda` |
 | `pytorch` | Loads PyTorch 2.7.0. This module is based on hpc-tools. | `module load pytorch` |
 | `pytorch-conda` | Loads the Conda environment containing PyTorch version 2.5.1. | `module load pytorch-conda` |
-| `airflow` | ... | `module load airflow` |
+| `airflow` | Apache Airflow is a workflow orchestration platform used to schedule, monitor, and manage pipelines and automated jobs. | `module load airflow` |
 | `ai-tools` | ... | `module load ai-tools` |
 
 
@@ -499,6 +499,7 @@ Python 3.14.2
 /cm/shared/apps/spack-packages/linux-cascadelake/python-3.14.2-r2pij3phvmh7dxantmbsha46qln2xtxp/bin/python
 ```
 
+***
 
 <br><br>
 
@@ -1300,6 +1301,44 @@ For advanced package development, I recommend reading the [packages creation tut
 
 # Apache Airflow
 
+Please create a folder with your name in `/clusterdata/airflow-dags`:
+```bash 
+mkdir -p /clusterdata/airflow-dags/$USER
+```
+This is the location where you can store your DAGS.    
+First thing to do is:
+
+```bash
+module load airflow
+```
+
+You can inspect your dags with 
+
+```bash
+airflow dags list   # this command has bugs
+airflow dags report
+airflow config get-value core dags_folder
+```
+
+You can suppress warnings by setting the env variable 
+```bash
+export PYTHONWARNINGS="ignore"
+```
+
+#### IMPORTANT
+
+You cannot trigger a DAG from the command line, because of missing permissions.
+The command `airflow dags trigger hello_world_dag` will give you an error.  
+
+You can trigger DAGS from the UI at the URL [http://localhost:8090](http://localhost:8090).
+
+You need a tunnel: `ssh -L 8090:localhost:8090 cantarutti@dgx-login`.   
+Or a better alternative is to set the following line in your `~/.ssh/config` file:
+```
+LocalForward 8090 localhost:8090
+```
+
+#### Ask the system administrator for the creation of your airflow account.
 
 
 ***
