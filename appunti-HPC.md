@@ -47,7 +47,7 @@
 15. [VS-code server](#vs-code-server)
 
 16. [Storage information](#storage-information)
-    - [Where do I save my data on /fast_disk?](#where-do-i-save-my-data-on-fast_disk)
+    - [Where do I save my data on /fast_disk and /clusterdata?](#where-do-i-save-my-data-on-fast_disk-and-clusterdata)
     - [AI-storage module](#ai-storage-module) 
 
 17. [Network Topology](#network-topology)
@@ -60,7 +60,6 @@
 
 19. [Apache Airflow](#apache-airflow)
 
-20. [AI-tools (opencode)](#ai-tools)
 
 
 <br><br>
@@ -202,7 +201,7 @@ Some useful modules in our cluster are:
 | `pytorch` | Loads PyTorch 2.7.0. This module is based on hpc-tools. | `module load pytorch` |
 | `pytorch-conda` | Loads the Conda environment containing PyTorch version 2.5.1. | `module load pytorch-conda` |
 | `airflow` | Apache Airflow is a workflow orchestration platform used to schedule, monitor, and manage pipelines and automated jobs. | `module load airflow` |
-| `ai-tools` | ... | `module load ai-tools` |
+
 
 
 <br><br>
@@ -492,12 +491,22 @@ uv python list
 
 Information about the python interpreter: 
 ```bash
->> module load python 3.14
+>> module load python3.14
 >> uv run python -V
 Python 3.14.2
 >> uv run which python
 /cm/shared/apps/spack-packages/linux-cascadelake/python-3.14.2-r2pij3phvmh7dxantmbsha46qln2xtxp/bin/python
 ```
+
+As we did with venv, we can create a virtual environment 
+
+```bash
+module load python3.14
+uv venv --prompt <the_name_you_like>
+source .venv/bin/activate
+uv run which python    # prints the location of the interpreter, inside the just created venv  
+```
+
 
 ***
 
@@ -1180,12 +1189,13 @@ mkdir -p $SCRATCH
 rm -rf $SCRATCH  # cleanup on exit
 ```
 
-### Where do I save my data on /fast_disk?
+### Where do I save my data on /fast_disk and /clusterdata?
 
 You can create a folder with your username and save your data inside it.
 For example you can use these paths:
 
 ```bash
+mkdir /clusterdata/dataset/$USER
 mkdir /fast_disk/models/$USER
 mkdir /fast_disk/checkpoints/$USER
 mkdir /fast_disk/dataset/$USER
@@ -1301,6 +1311,8 @@ For advanced package development, I recommend reading the [packages creation tut
 
 # Apache Airflow
 
+**Ask the system administrator to create an Airflow account for you.**
+
 Please create a folder with your name in `/clusterdata/airflow-dags`:
 ```bash 
 mkdir -p /clusterdata/airflow-dags/$USER
@@ -1315,10 +1327,11 @@ module load airflow
 You can inspect your dags with 
 
 ```bash
-airflow dags list   # this command has bugs
 airflow dags report
 airflow config get-value core dags_folder
 ```
+
+If you use `airflow dags list` there may be  bugs in the output.
 
 You can suppress warnings by setting the env variable 
 ```bash
@@ -1338,12 +1351,7 @@ Or a better alternative is to set the following line in your `~/.ssh/config` fil
 LocalForward 8090 localhost:8090
 ```
 
-#### Ask the system administrator for the creation of your airflow account.
-
 
 ***
 
 <br><br>
-
-# AI-tools
-
