@@ -498,15 +498,20 @@ Python 3.14.2
 /cm/shared/apps/spack-packages/linux-cascadelake/python-3.14.2-r2pij3phvmh7dxantmbsha46qln2xtxp/bin/python
 ```
 
-As we did with venv, we can create a virtual environment 
+We can create a new uv project 
 
 ```bash
 module load python3.14
-uv venv --prompt <the_name_you_like>
-source .venv/bin/activate
+uv init
 uv run which python    # prints the location of the interpreter, inside the just created venv  
 ```
 
+If you are inside an uv project there is no need to activate the venv. 
+You are inside an uv project if any one of these three exists:  `pyproject.toml` `uv.lock` `.venv`.
+You can install the dependencies/requirements with
+```bash
+uv sync
+```
 
 ***
 
