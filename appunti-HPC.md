@@ -525,6 +525,12 @@ To use Anaconda, you need to load the appropriate module:
 module load conda
 ```
 
+If you run conda for the first time, run: 
+
+```bash
+conda init
+```
+
 To see the existing virtual environments, use:
 
 ```bash
