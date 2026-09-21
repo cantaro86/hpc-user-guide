@@ -726,11 +726,13 @@ For example this is a typical workflow:
 salloc --job-name="ollama" --nodes=1 --ntasks-per-node=1 --cpus-per-task=1 --gpus-per-node=1 --time=00:30:00
 module load ollama
 export OLLAMA_HOST="http://localhost:11432"
-ollama serve &
+OLLAMA_LOG="ollama-${SLURM_JOB_ID}.log"
+ollama serve </dev/null >"${OLLAMA_LOG}" 2>&1 &
 ollama list
 ```
 
 Using the `&` we are saying `ollama serve` to run in the background.
+With this approach the output is redirected to the file OLLAMA_LOG.
 
 By default the PORT used by OLLAMA is 11434. However, if many users run ollama at the same time you need to use a different port. Here we use 11432 as the ollama port.
 
@@ -738,6 +740,9 @@ The models are saved in this path:
 ```bash
 echo $OLLAMA_MODELS 
 ```
+
+Alternatively you can use a sbatch file. Here is an example: [ollama.sbatch](./ollama.sbatch) .
+You can run it and read the instructions produced in the `.out` file.
 
 
 <br><br>
@@ -913,11 +918,11 @@ This can be changed with the option `--env OLLAMA_MODELS=/your_path`
 ### OLLAMA sbatch
 
 The commands in the section above can be run as a sbatch script. The script is available here: 
-[ollama.sbatch](./ollama.sbatch) .
+[ollama_singularity.sbatch](./ollama_singularity.sbatch) .
 
 You can run it with 
 ```bash
-sbatch ollama.sbatch
+sbatch ollama_singularity.sbatch
 ```
 And read the output file `ollama.out`. It contains information on how to access the running ollama server by using `srun`.
 At the end, it is necessary to kill the allocation manually with an scancel.

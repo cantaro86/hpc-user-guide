@@ -2,94 +2,87 @@
 #SBATCH --job-name=ollama
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=2
 #SBATCH --gpus-per-node=1
-#SBATCH --time=01:45:00
-#SBATCH --output=ollama.out
-#SBATCH --error=ollama.err
+#SBATCH --time=08:30:00
+#SBATCH --output=ollama-%j.out
+#SBATCH --error=ollama-%j.err
 
-# -------------------------------
-# 1. Load environment
-# -------------------------------
-module load singularity
+set -euo pipefail
 
-# -------------------------------
-# 2. Set variables
-# -------------------------------
+module load ollama
 
-export OLLAMA_DIR="/home/ollama"
-export OLLAMA_MODELS="${OLLAMA_DIR}/models"
-export SIF_FILE="${OLLAMA_DIR}/ollama.sif"
-export SIF_URI="docker://ollama/ollama:0.10.0-rc3"
-export OLLAMA_HOST="http://localhost:11439"
+PORT="${PORT:-11432}"
+MODEL_NAME="${MODEL_NAME:-qwen3-coder:30b}"
+NODE="$(hostname -s)"
 
-mkdir -p "${OLLAMA_MODELS}"
+export OLLAMA_HOST="127.0.0.1:${PORT}"
+export OLLAMA_KEEP_ALIVE="-1"
+# export OLLAMA_MODELS="$HOME/.ollama/models"
 
+ollama serve >"ollama-${SLURM_JOB_ID:-manual}.log" 2>&1 &
+OLLAMA_PID=$!
 
-echo "==============================="
-echo " SLURM job started on $(hostname)"
-echo " Job ID: $SLURM_JOB_ID"
-echo "==============================="
+READY=false
+for ((attempt = 0; attempt < 60; attempt++)); do
+    if ! kill -0 "${OLLAMA_PID}" 2>/dev/null; then
+        echo "Error: Ollama failed to start" >&2
+        wait "${OLLAMA_PID}"
+        exit 1
+    fi
 
-# -------------------------------
-# 3. Pull container if missing
-# -------------------------------
-if [ ! -f "$SIF_FILE" ]; then
-    echo "[INFO] Ollama container not found in ${OLLAMA_DIR}, pulling from $SIF_URI ..."
-    mkdir -p "${OLLAMA_DIR}"
-    # Use a temp file to avoid partial downloads if interrupted
-    TMP_SIF="${OLLAMA_DIR}/ollama_tmp_$$.sif"
-    singularity pull "${TMP_SIF}" "${SIF_URI}" && mv "${TMP_SIF}" "${SIF_FILE}"
-    echo "[INFO] Container saved to ${SIF_FILE}"
-else
-    echo "[INFO] Container ${SIF_FILE} already exists — skipping download."
+    if ollama list >/dev/null 2>&1 && kill -0 "${OLLAMA_PID}" 2>/dev/null; then
+        READY=true
+        break
+    fi
+    sleep 1
+done
+
+if [[ "${READY}" != true ]]; then
+    echo "Error: Ollama did not become ready within 60 seconds" >&2
+    exit 1
 fi
 
-# -------------------------------
-# 4. Start Ollama server
-# -------------------------------
-echo "Starting Ollama server..."
-singularity exec --nv \
-  -B "${OLLAMA_DIR}:${OLLAMA_DIR}" \
-  -B /tmp:/tmp \
-  --cleanenv \
-  --env OLLAMA_HOST="${OLLAMA_HOST}" \
-  --env OLLAMA_MODELS="${OLLAMA_MODELS}" \
-  --env NVIDIA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}" \
-  "${SIF_FILE}" ollama serve &
+if ! ollama run "${MODEL_NAME}" "warm up" >/dev/null; then
+    echo "Error: failed to warm up Ollama model ${MODEL_NAME}" >&2
+    exit 1
+fi
 
-
-SERVER_PID=$!
-sleep 4
-
-
-# -------------------------------
-# 5. Display connection info
-# -------------------------------
+if ! kill -0 "${OLLAMA_PID}" 2>/dev/null; then
+    echo "Error: Ollama stopped during model warm-up" >&2
+    wait "${OLLAMA_PID}"
+    exit 1
+fi
 
 cat <<EOF
+Ollama is ready on compute node ${NODE}.
 
-==========================================================
-✅ Ollama server is running on node: $(hostname)
-   Host URL: ${OLLAMA_HOST}
+To use Ollama interactively from the login node:
 
-To open an interactive shell in the same job, run this
-**from your login node** (NOT inside this job):
+1. In a terminal on the login node, start this SSH tunnel:
+   ssh -N -L ${PORT}:127.0.0.1:${PORT} ${NODE}
 
-    srun --jobid=${SLURM_JOB_ID} --pty bash -c "module load singularity && singularity shell --nv --cleanenv -B ${OLLAMA_DIR}:${OLLAMA_DIR} --env OLLAMA_MODELS=${OLLAMA_MODELS} --env OLLAMA_HOST=${OLLAMA_HOST} ${SIF_FILE}"
+   Keep this terminal open. No output is expected while the tunnel runs.
 
-Notes:
-- \$HOME inside the container is automatically set to your home directory.
-- This ensures that Ollama models are stored in the shared folder: ${OLLAMA_DIR}
+2. Open another terminal on the SAME login node and run:
+   module load ollama
+   export OLLAMA_HOST=127.0.0.1:${PORT}
+   ollama list
+   ollama run ${MODEL_NAME}
 
-When finished, exit the shell with 'exit' and cancel the job:
-  scancel ${SLURM_JOB_ID}
-==========================================================
+   'ollama list' shows the models available on the compute node.
+   'ollama run' opens an interactive prompt; inference runs on the compute node.
+   Type /bye to exit the interactive prompt.
 
+The tunnel forwards the login node's port ${PORT} to Ollama on ${NODE}.
+Closing the prompt or tunnel does not stop the Slurm job.
+To stop the job when finished, run:
+   scancel ${SLURM_JOB_ID:-JOBID}
+
+Alternatively you can run Ollama commands directly on the compute node using:
+   sjoin ${SLURM_JOB_ID:-JOBID}
+   module load ollama
+   export OLLAMA_HOST=127.0.0.1:${PORT}
 EOF
 
-
-# -------------------------------
-# 6. Keep the job alive
-# -------------------------------
-tail -f /dev/null
+wait "${OLLAMA_PID}"
