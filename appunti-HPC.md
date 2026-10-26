@@ -143,6 +143,10 @@ Host dgx-login
 
 ## Environment modules
 
+**TODO: update module section**
+
+
+
 In HPC clusters, it's common to load applications via modules.    
 This makes it easier to select the application version you need. 
 If you need to use an application, first check if it's included in the modules. **Don't install it locally if already exists as a module**.
