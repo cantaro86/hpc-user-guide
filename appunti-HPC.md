@@ -22,9 +22,6 @@
 7. [UV](#uv)
 
 8. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
-   - [PyTorch Module](#pytorch-module)
-   - [EXAMPLE 1 (conda environment)](#example-1-conda-environment)
-   - [EXAMPLE 2 (module)](#example-2-module)
    - [Activating a Conda Environment in an sbatch Script](#activating-a-conda-environment-in-an-sbatch-script)
 
 9. [JUPYTER](#jupyter)
@@ -143,8 +140,6 @@ Host dgx-login
 
 ## Environment modules
 
-**TODO: update module section**
-
 
 
 In HPC clusters, it's common to load applications via modules.    
@@ -184,28 +179,27 @@ Some useful modules in our cluster are:
 | --- | --- | --- |
 | `spack` | Enables the Spack package manager so users can inspect, install, and manage software packages. | `module load spack` |
 | `uv` | Fast Python package/project manager (pip, venv & project management replacement). | `module load uv` |
-| `gcc14.2` | Loads GCC, G++, and GFortran version 14.2.0. | `module load gcc14.2` |
-| `llvm` | Loads `clang` and `clang++` version 21.1.4. | `module load llvm` |
-| `python3.x` | Loads Python 3.11, 3.12, 3.13 or 3.14 for running Python applications and creating virtual environments. | `module load python3.14` |
+| `gcc` | Loads GCC, G++, and GFortran version 16.2.0 or 14.2.0. | `module load gcc16.2` |
+| `llvm` | Loads `clang` and `clang++` version 23.1.4. | `module load llvm` |
+| `python3.x` | Loads Python 3.11, 3.12, 3.14 or 3.15 for running Python applications and creating virtual environments. | `module load python3.15` |
 | `conda` | Provides Conda for creating and managing Python environments and packages. | `module load conda` |
 | `ollama` | Provides the Ollama command-line tool for running and serving local large language models. | `module load ollama` |
-| `hpc-tools` | Loads a set of HPC development tools, including compiler, MPI, CUDA, build tools, and common libraries. | `module load hpc-tools` |
-| `nvhpc` | Loads the NVIDIA HPC SDK compilers and development tools. | `module load nvhpc` |
-| `singularity` | Provides Singularity (or Apptainer) for running containerized applications. | `module load singularity` |
-| `ai-storage` | Configures environment variables and paths used to access AI storage locations. | `module load ai-storage` |
+| `apptainer` | Provides Singularity (or Apptainer) for running containerized applications. | `module load apptainer` |
 | `eigen` | Loads Eigen C++ template library for linear algebra version 5.0.1 (header-only, works with any compiler). | `module load eigen/5.0.1` |
-| `boost` | Loads Boost C++ libraries version 1.89.0. | `module load boost/1.89.0` |
-| `cmake` | Loads CMake build system version 4.1.2. | `module load cmake/4.1.2` |
-| `hdf5-mpi` | Loads HDF5 data library version 1.14.6 with MPI support for parallel I/O. | `module load hdf5/1.14.6-mpi` |
-| `hdf5-serial` | Loads HDF5 data library version 1.14.6 without MPI (serial version). | `module load hdf5/1.14.6-serial` |
-| `ninja` | Loads Ninja build system version 1.13.0 compiled with GCC 14.2.0. | `module load ninja/1.13.0` |
-| `openmpi-cpu` | Loads OpenMPI version 5.0.9 CPU-only. | `module load openmpi/5.0.9-cpu` |
-| `openmpi-cuda` | Loads OpenMPI version 5.0.9 with CUDA and UCX support. | `module load openmpi/5.0.9-cuda-ucx` |
-| `cuda` | Loads NVIDIA CUDA Toolkit version 13.1.1 for GPU computing and CUDA development. It contains nvcc. | `module load cuda` |
-| `pytorch` | Loads PyTorch 2.7.0. This module is based on hpc-tools. | `module load pytorch` |
-| `pytorch-conda` | Loads the Conda environment containing PyTorch version 2.5.1. | `module load pytorch-conda` |
-| `airflow` | Apache Airflow is a workflow orchestration platform used to schedule, monitor, and manage pipelines and automated jobs. | `module load airflow` |
+| `boost` | Loads Boost C++ libraries version 1.90.0. | `module load boost` |
+| `cmake` | Loads CMake build system version 3.31.12. | `module load cmake` |
+| `ninja` | Loads Ninja build system version 1.13.2 compiled with local GCC 15.2.0. | `module load ninja` |
+| `cuda` | Loads NVIDIA CUDA Toolkit version 13.4.2 for GPU computing and CUDA development. It contains nvcc. | `module load cuda` |
+| `rust` | Loads the full rust development kit. It contains rustc, cargo, etc. | `module load rust` |
 
+<!-- | `ai-storage` | Configures environment variables and paths used to access AI storage locations. | `module load ai-storage` | -->
+<!-- | `hdf5-mpi` | Loads HDF5 data library version 1.14.6 with MPI support for parallel I/O. | `module load hdf5/1.14.6-mpi` |
+| `hdf5-serial` | Loads HDF5 data library version 1.14.6 without MPI (serial version). | `module load hdf5/1.14.6-serial` | -->
+<!-- | `openmpi-cpu` | Loads OpenMPI version 5.0.9 CPU-only. | `module load openmpi/5.0.9-cpu` |
+| `openmpi-cuda` | Loads OpenMPI version 5.0.9 with CUDA and UCX support. | `module load openmpi/5.0.9-cuda-ucx` | -->
+<!-- | `pytorch` | Loads PyTorch 2.7.0. This module is based on hpc-tools. | `module load pytorch` |
+| `pytorch-conda` | Loads the Conda environment containing PyTorch version 2.5.1. | `module load pytorch-conda` |
+| `airflow` | Apache Airflow is a workflow orchestration platform used to schedule, monitor, and manage pipelines and automated jobs. | `module load airflow` | -->
 
 
 <br><br>
@@ -272,10 +266,10 @@ scancel 186800
 It is good practice to use `salloc` with all the main parameters for the allocation. 
 
 ```bash
-salloc --nodes=2 --ntasks=4 --time=00:15:00 --gres=gpu:1 --job-name="device_count"
+salloc --nodes=1 --ntasks=4 --time=00:15:00 --gres=gpu:1 --job-name="device_count"
 ```
 
-The previous command reserves 2 nodes. On the reserved nodes, we are also requesting 4 parallel processes (`ntasks=4`) in total, i.e., 2 processes per node. In each node, we request 1 GPUs, so 2 in total.
+The previous command reserves 1 nodes. On the reserved nodes, we are also requesting 4 parallel processes (`ntasks=4`) in total, i.e., 2 processes per node. We also request 1 GPUs.
 
 Now let's see how many GPUs PyTorch sees:
 ```bash
@@ -285,7 +279,7 @@ python -c "import torch; print(torch.cuda.device_count())"
 ```
 The output is `1`, corresponding to the number of gpus we requested on each node with the option `--gres=gpu:1`. 
 
-Since we allocated two nodes and two processes per node, we can use `srun` before the command in this way: 
+If you have the possibility to allocate two nodes, two processes per node, and one GPU per node, you can use `srun` before the command in this way: 
 ```bash
 srun python -c "import torch; print(torch.cuda.device_count())"
 ```
@@ -385,7 +379,7 @@ In order to see which qos you can use, run:
 sacctmgr show assoc where user=$USER
 ```
 
-By default, each user can access *normal* QOS, which allows them to request up to 2 GPUs.   
+By default, each user can access *normal* QOS, which allows them to request up to 1 GPU.   
 The *mira* QOS is reserved for people working the MIRA project, has a limit of 4 GPUs.
 
 Let's see an 
@@ -416,20 +410,20 @@ sacctmgr show qos format=Name,Priority,Preempt%20,MaxTRESPU%20,MaxJobsPU,MaxWall
 
 | Name | Priority | Preempt | MaxTRESPU | MaxJobsPU | MaxWall
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| normal | 50 | longrun | cpu=100,gres/gpu=2 | 100 | |
-| mira | 50 | longrun | cpu=100,gres/gpu=4 | 100 | |
+| normal | 50 | longrun | cpu=64,gres/gpu=1 | 64 | |
+| mira | 60 | longrun | cpu=64,gres/gpu=4 | 64 | |
 | notimelimit | 0 | | | | | 
 | longrun | 1 | | | | 7-00:00:00 |
-| urgent | 100 | longrun,normal | cpu=100,gres/gpu=2 | 100 | |
+| urgent | 100 | longrun,normal | cpu=64,gres/gpu=1 | 64 | |
 
 Explanation of the table:
 - The QOS *notimelimit* is not available to users. 
-- The qos *urgent* let a user allocate at most 2 GPUs, 100 CPUs and 100 jobs. It has the highest priority, and it can replace jobs in the *normal* and *longrun* qos. **Please, use it only if you really need it.**
+- The qos *urgent* let a user allocate at most 1 GPUs, 64 CPUs and 64 jobs. It has the highest priority, and it can replace jobs in the *normal* and *longrun* qos. **Please, use it only if you really need it.**
 - *mira* now lets you allocate up to 4 GPUs.
 - *longrun* is the qos for long running jobs, up to 7 days.
 
 What happens when a job is preempted?
-Initially there is a 5 minute waiting time. After that, the job is stopped, reset to PENDING, and restarts from scratch.
+The job is stopped, reset to PENDING, and restarts from scratch.
 
 Do you need many GPUs with no interruption? Please, ask the administrator for a reservation. 
 
@@ -445,20 +439,20 @@ Python packages installed outside virtual environments are a source of troubles!
 
 EXAMPLE:
 
-The system python is an old version.
+The system python is:
 ```bash
 user@hpchead01:~$ which python
 /usr/bin/python
 user@hpchead01:~$ python --version
-Python 3.10.12
+Python 3.14.4
 ```
 
-It is better to create a virtual environment on top of a more recent python version.    
+Since the system python may change, it is better to create a virtual environment on top of a fixed python version.    
 We can achieve that by loading the module of the python version we want to use.    
 In the following example I am using python 3.14:
 
 ```bash
-module load python3.14
+module load python3.15
 python --version
 ```
 
@@ -495,17 +489,18 @@ uv python list
 
 Information about the python interpreter: 
 ```bash
->> module load python3.14
+>> module load python3.15
 >> uv run python -V
-Python 3.14.2
+Python 3.15.1
 >> uv run which python
-/cm/shared/apps/spack-packages/linux-cascadelake/python-3.14.2-r2pij3phvmh7dxantmbsha46qln2xtxp/bin/python
+/cm/shared/apps/spack-packages/linux-cascadelake/python-3.15.1-qyg55f4uyn5qsd6z7j6ydmv6aan4w3lq/bin/python
 ```
 
 We can create a new uv project 
 
 ```bash
 module load python3.14
+mkdir test && cd test
 uv init
 uv run which python    # prints the location of the interpreter, inside the just created venv  
 ```
@@ -541,9 +536,8 @@ To see the existing virtual environments, use:
 conda env list
 ```
 
-Currently, there are a few system virtual environments (`base`, and `pytorch-2.5.1`).    
+Currently, there is a system virtual environment (`base`).    
 Do **not** use `base`.     
-The `pytorch-2.5.1` environment contains the main packages needed to work with Python 3.12. 
 
 If you need to create a new system environment, in case your group needs a shared environment, contact the system administrators.
 
@@ -560,42 +554,6 @@ conda remove -n environment1 --all
 ```
 
 
-### PyTorch Module
-
-Alternatively, you can use the module:
-
-```bash
-module load pytorch-conda
-```
-
-This module uses the same `pytorch-2.5.1` virtual environment as Anaconda.      
-Modules based on Anaconda virtual environments follow a naming convention of the type `<environment_name>-conda`.      
-
-When using the module, it is NOT necessary to activate the virtual environment with    
-`conda activate <environment_name>`.
-
-### EXAMPLE 1 (conda environment):
-
-```bash
-salloc -N 1 --time=00:15:00 --gres=gpu:1 --job-name="torch_test"
-module load conda
-conda activate pytorch-2.5.1
-python
->>> import torch
->>> torch.cuda.device_count()          # output 1
->>> exit()
-```
-
-### EXAMPLE 2 (module):
-
-```bash
-salloc -N 1 --time=00:15:00 --qos=normal --gres=gpu:2 --job-name="torch_test"
-module load pytorch-conda
-python
->>> import torch
->>> torch.cuda.device_count()          # output 2
->>> exit()
-```
 
 ### Activating a Conda Environment in an sbatch Script
 
@@ -615,7 +573,7 @@ The command with `eval` is used to initialize Conda in the bash shell and be abl
 
 ## JUPYTER
 
-The Jupyter package is installed in the `pytorch-2.5.1` Conda environment.
+The Jupyter package must be already installed in your python environment.
 
 Create a text file and name it `jupyter.sbatch`. Copy/paste the script at the bottom of the paragraph inside it.
 
@@ -655,7 +613,9 @@ http://127.0.0.1:8892/lab?token=0a61901842c346fb6fa059a74ae4a0dd86f88d6217e22780
 #SBATCH --output=%x.log
 #SBATCH --error=%x.log
 
-module load pytorch-conda
+module load conda
+eval "$(conda shell.bash hook)"
+conda activate <your_conda_env>
 
 node=$(hostname -s)
 user=$(whoami)
