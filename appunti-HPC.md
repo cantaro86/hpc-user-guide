@@ -1075,6 +1075,17 @@ The cluster provides three main storage areas with different performance and per
 - `/clusterdata`
 - `/fast_disk`
 
+The permissions in `/clusterdata` are:
+
+| Path | Everyone | hpcusers | Creator |
+|---|---|---|---|
+| `/clusterdata` | read only | read only | — |
+| `/clusterdata/models` | read and traverse | + create folders | — |
+| `/clusterdata/models/<private>` | no access | no access | full control |
+| `/clusterdata/models/ollama` | read only | read and write | full control of own files |
+| `/clusterdata/models/huggingface` | read only | read and write | full control of own files |
+
+
 Choosing the correct location is essential for performance and data safety.
 
 ***
