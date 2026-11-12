@@ -721,47 +721,12 @@ With
 module load cuda
 ```
 
-you can use the NVIDIA CUDA Toolkit version 13.1.1, with the `nvcc` compiler.
+you can use the NVIDIA CUDA Toolkit version  V13.4.92, with the `nvcc` compiler.
 
-
-### hpc-tools
-
-If you need to use libraries for HPC software development, mainly in C++ and Python, load the following module:
-
-```bash
-module load hpc-tools
-```
-
-It contains the latest versions of the main HPC tools:
-
-- gcc-14, cmake-3.31.6, openmpi-5.0.7, openmp, ninja, Eigen3, Boost
-- Cuda-12.8
-- HWLOC, PMIx, Libevent, and UCX.
-- python-12.9
-
-With these libraries, it is possible to write multi-node and multi-GPU code, making GPUs communicate between different nodes.
-
-### pytorch 2.7.0
-
-With a simple
-```bash
-module load pytorch
-```
-we can load pytorch 2.7.0. This module depends on *hpc-tools*, so it uses CUDA 12.8 and python 3.12.
-This module is not conda based. It does not create a virtual environment, but simply adds pytorch to the PYTHONPATH. 
-
-
-### HPC CUDA libraries
-
-For the HPC libraries of CUDA (NVIDIA HPC SDK), use the module:
-
-```bash
-module load nvhpc
-```
 
 <br><br>
 
-## Singularity
+## Apptainer/Singularity
 
 If you need to run a container you can do it with Singularity.     
 Singularity let's you run Docker and Singularity containers.  
