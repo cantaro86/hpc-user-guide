@@ -30,32 +30,30 @@
 
 10. [OLLAMA Module](#ollama-module)
 
-11. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
-
-12. [Singularity](#singularity)
+11. [Singularity](#singularity)
    - [OLLAMA container](#ollama-container)
    - [OLLAMA sbatch](#ollama-sbatch)
    - [SSH tunnel](#ssh-tunnel)
 
-13. [Tips](#tips)
+12. [Tips](#tips)
 
-14. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
+13. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
 
-15. [VS-code server](#vs-code-server)
+14. [VS-code server](#vs-code-server)
 
-16. [Storage information](#storage-information)
+15. [Storage information](#storage-information)
     - [Where do I save my data on /fast_disk and /clusterdata?](#where-do-i-save-my-data-on-fast_disk-and-clusterdata)
     - [AI-storage module](#ai-storage-module) 
 
-17. [Network Topology](#network-topology)
+16. [Network Topology](#network-topology)
     - [Node IP Address Reference](#node-ip-address-reference)
     - [`/fast_disk` — BeeGFS Storage](#fast_disk--beegfs-storage)
     - [`/clusterdata` — NAS Storage (NFS v3)](#clusterdata--nas-storage-nfs-v3)
     - [Storage Bandwidth Summary](#storage-bandwidth-summary)
 
-18. [Packages with spack](#packages-with-spack)
+17. [Packages with spack](#packages-with-spack)
 
-19. [Apache Airflow](#apache-airflow)
+18. [Apache Airflow](#apache-airflow)
 
 
 
@@ -707,21 +705,6 @@ echo $OLLAMA_MODELS
 
 Alternatively you can use a sbatch file. Here is an example: [ollama.sbatch](./ollama.sbatch) .
 You can run it and read the instructions produced in the `.out` file.
-
-
-<br><br>
-
-## Other modules for HPC and pytorch
-
-
-### Cuda
-
-With 
-```bash
-module load cuda
-```
-
-you can use the NVIDIA CUDA Toolkit version  V13.4.92, with the `nvcc` compiler.
 
 
 <br><br>
