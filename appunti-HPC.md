@@ -1035,6 +1035,7 @@ The permissions in `/clusterdata` are:
 | Path | Everyone | hpcusers | Creator |
 |---|---|---|---|
 | `/clusterdata` | read only | read only | — |
+| `/clusterdata/datasets` | read only | read and write | full control of own files |
 | `/clusterdata/models` | read and traverse | + create folders | — |
 | `/clusterdata/models/<private>` | no access | no access | full control |
 | `/clusterdata/models/ollama` | read only | read and write | full control of own files |
