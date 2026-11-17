@@ -2,97 +2,102 @@
 
 ## Table of Contents
 
-1. [Cluster Overview and Usage Policy](#cluster-overview-and-usage-policy)
-   - [Cluster Topology](#cluster-topology)
-   - [Usage Rules](#usage-rules)
+1. [Cluster Overview](#cluster-overview)
 
-2. [Contacts](#contacts)
+2. [Cluster Rules](#cluster-rules)
 
-3. [Connecting via SSH](#connecting-via-ssh)
+3. [Contacts](#contacts)
 
-4. [Environment modules](#environment-modules)
+4. [Connecting via SSH](#connecting-via-ssh)
 
-5. [Using SLURM](#using-slurm)
+5. [Environment modules](#environment-modules)
+
+6. [Using SLURM](#using-slurm)
    - [salloc VS ssh](#salloc-vs-ssh)
    - [Use sjoin to connect to the compute nodes](#use-sjoin-to-connect-to-the-compute-nodes)
    - [QOS (unlock more GPUs)](#qos-unlock-more-gpus)
 
-6. [Python virtual environment (venv)](#python-virtual-environment-venv)
+7. [Python virtual environment (venv)](#python-virtual-environment-venv)
 
-7. [UV](#uv)
+8. [UV](#uv)
 
-8. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
+9. [ANACONDA and PYTORCH](#anaconda-and-pytorch)
    - [Activating a Conda Environment in an sbatch Script](#activating-a-conda-environment-in-an-sbatch-script)
 
-9. [JUPYTER](#jupyter)
+10. [JUPYTER](#jupyter)
    - [Jupyter Script](#jupyter-script)
    - [VS-code jupyter extension](#vs-code-jupyter-extension)
 
-10. [OLLAMA Module](#ollama-module)
+11. [OLLAMA Module](#ollama-module)
 
-11. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
+12. [Other modules for HPC and pytorch](#other-modules-for-hpc-and-pytorch)
 
-12. [Singularity](#singularity)
+13. [Singularity](#singularity)
    - [OLLAMA container](#ollama-container)
    - [OLLAMA sbatch](#ollama-sbatch)
    - [SSH tunnel](#ssh-tunnel)
 
-13. [Tips](#tips)
+14. [Tips](#tips)
 
-14. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
+15. [Debug python program on the compute node with VS Code](#debug-python-program-on-the-compute-node-with-vs-code)
 
-15. [VS-code server](#vs-code-server)
+16. [VS-code server](#vs-code-server)
 
-16. [Storage information](#storage-information)
+17. [Storage information](#storage-information)
     - [Where do I save my data on /fast_disk and /clusterdata?](#where-do-i-save-my-data-on-fast_disk-and-clusterdata)
     - [AI-storage module](#ai-storage-module) 
 
-17. [Network Topology](#network-topology)
+18. [Network Topology](#network-topology)
     - [Node IP Address Reference](#node-ip-address-reference)
     - [`/fast_disk` — BeeGFS Storage](#fast_disk--beegfs-storage)
     - [`/clusterdata` — NAS Storage (NFS v3)](#clusterdata--nas-storage-nfs-v3)
     - [Storage Bandwidth Summary](#storage-bandwidth-summary)
 
-18. [Packages with spack](#packages-with-spack)
+19. [Packages with spack](#packages-with-spack)
 
-19. [Apache Airflow](#apache-airflow)
+20. [Apache Airflow](#apache-airflow)
 
 
 
 <br><br>
 
-## Cluster Overview and Usage Policy
+## Cluster Overview
 
-### Cluster Topology
 The HPC cluster is composed of:
 
-- Login node (hpchead01): used for SSH access, job submission (SLURM), file management, and lightweight operations.
+- Login node (bcmheadnode01): used for SSH access, job submission (SLURM), file management, and lightweight operations.
 
 - 2 DGX compute nodes (dgx01 and dgx02): GPU-enabled nodes dedicated to all computational workloads (e.g., large simulations, machine learning, data analysis).
 
 <br><br>
 
-### Usage Rules:
+## Cluster Rules:
 
-- The login node must **not** be used for computational workloads e.g., training, large-scale data processing, long-running scripts.
-
-- All CPU/GPU-intensive tasks must be executed on the compute nodes through the SLURM scheduler.
-
-- Jupyter notebooks using significant resources (GPU, large datasets, high memory) must run on compute nodes.
-
-- Connecting via ssh to compute nodes is not allowed. Direct execution on compute nodes outside scheduled jobs **is not permitted**.
-
-- VS-code with the SSH extension takes up over 1GB of memory. Don't use more than one active vs-code window connected to the cluster.
-
-- If you need specific resources, e.g. one full node for 1 day with no interruptions, ask the administrator for a reservation. 
-
-- AI/ML models and large datasets should not be stored in the `/home`. Use `/clusterdata` or `/fast_disk` instead.
-
-- **Resources must be requested appropriately and not left idle.**
+1) The login node must **NOT** be used for computational workloads e.g. training, large-scale data processing, long-running scripts.   
+All CPU/GPU-intensive tasks must be executed on the compute nodes through the SLURM scheduler.    
+Jupyter notebooks using significant resources (GPU, large datasets, high memory) must run on compute nodes.
 
 
-Keeping a model loaded on a GPU consumes power even when you’re not doing inference.
+2) Connecting via ssh to compute nodes is not allowed. Direct execution on compute nodes outside scheduled jobs **is not permitted**.
+
+3) **Resources (GPUs and CPUs) must be requested appropriately and not left idle.**
+
+4) Keeping a model loaded on a GPU consumes power even when you’re not doing inference.
 If you won’t use the model for many hours (e.g., overnight), please quit your program.
+
+5) AI/ML models and large datasets should not be stored in the `/home`. Use `/clusterdata` or `/fast_disk` instead.
+
+6) Use modules when possible. Avoid installing programs already in modules. For example, if you need to use anaconda, you can use `module load anaconda`. There is no need to install it in your home.
+
+7) VS-code with the SSH extension takes up over 1GB of memory. Don't use more than one active vs-code window connected to the cluster.
+
+8) If you need specific resources, e.g. one full node for 1 day with no interruptions, ask the administrator for a reservation. 
+
+9) This cluster should be used for research, machine learning and AI applications. 
+   - Do not use it for cybersecurity testing. 
+   - Do not install malicious programs or viruses. 
+   - Do not attempt to gain root access.
+
 
 If you have doubts or questions, please contact the administrator.
 
