@@ -83,7 +83,9 @@ Jupyter notebooks using significant resources (GPU, large datasets, high memory)
 4) Keeping a model loaded on a GPU consumes power even when you’re not doing inference.
 If you won’t use the model for many hours (e.g., overnight), please quit your program.
 
-5) AI/ML models and large datasets should not be stored in the `/home`. Use `/clusterdata` or `/fast_disk` instead.
+5) AI/ML models and large datasets should not be stored in the `/home`. 
+Use `/fast_disk` for high performance. It is the recommended option! 
+Use `/clusterdata` only for dataset and models you want to back up. 
 
 6) Use modules when possible. Avoid installing programs already in modules. For example, if you need to use anaconda, you can use `module load anaconda`. There is no need to install it in your home.
 
