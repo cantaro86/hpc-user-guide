@@ -51,9 +51,11 @@
     - [`/clusterdata` — NAS Storage (NFS v3)](#clusterdata--nas-storage-nfs-v3)
     - [Storage Bandwidth Summary](#storage-bandwidth-summary)
 
-17. [Packages with spack](#packages-with-spack)
+18. [Using Claude Code on the cluster](#using-claude-code-on-the-cluster)
 
-18. [Apache Airflow](#apache-airflow)
+19. [Packages with spack](#packages-with-spack)
+
+20. [Apache Airflow](#apache-airflow)
 
 
 
@@ -196,6 +198,7 @@ Some useful modules in our cluster are:
 | `ninja` | Loads Ninja build system version 1.13.2 compiled with local GCC 15.2.0. | `module load ninja` |
 | `cuda` | Loads NVIDIA CUDA Toolkit version 13.4.2 for GPU computing and CUDA development. It contains nvcc. | `module load cuda` |
 | `rust` | Loads the full rust development kit. It contains rustc, cargo, etc. | `module load rust` |
+| `claude-code` | Loads claude-code, version 2.1.311 | `module load claude-code` | 
 
 <!-- | `ai-storage` | Configures environment variables and paths used to access AI storage locations. | `module load ai-storage` | -->
 <!-- | `hdf5-mpi` | Loads HDF5 data library version 1.14.6 with MPI support for parallel I/O. | `module load hdf5/1.14.6-mpi` |
@@ -275,6 +278,8 @@ salloc --nodes=1 --ntasks=4 --time=00:15:00 --gres=gpu:1 --job-name="device_coun
 ```
 
 The previous command reserves 1 nodes. On the reserved nodes, we are also requesting 4 parallel processes (`ntasks=4`) in total, i.e., 2 processes per node. We also request 1 GPUs.
+
+If you don't specify the *time*, the default value is 30 minutes.
 
 Now let's see how many GPUs PyTorch sees:
 ```bash
@@ -415,17 +420,18 @@ sacctmgr show qos format=Name,Priority,Preempt%20,MaxTRESPU%20,MaxJobsPU,MaxWall
 
 | Name | Priority | Preempt | MaxTRESPU | MaxJobsPU | MaxWall
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| normal | 50 | longrun | cpu=64,gres/gpu=1 | 64 | |
-| mira | 60 | longrun | cpu=64,gres/gpu=4 | 64 | |
-| notimelimit | 0 | | | | | 
+| normal | 50 | longrun | cpu=64,gres/gpu=1 | 64 | 1-00:00:00 |
+| mira | 60 | longrun | cpu=64,gres/gpu=4 | 64 | 1-00:00:00 |
+| notimelimit | 0 | | | | 1-00:00:00 | 
 | longrun | 1 | | | | 7-00:00:00 |
-| urgent | 100 | longrun,normal | cpu=64,gres/gpu=1 | 64 | |
+| urgent | 100 | longrun,normal | cpu=64,gres/gpu=1 | 64 | 1-00:00:00 |
 
 Explanation of the table:
 - The QOS *notimelimit* is not available to users. 
 - The qos *urgent* let a user allocate at most 1 GPUs, 64 CPUs and 64 jobs. It has the highest priority, and it can replace jobs in the *normal* and *longrun* qos. **Please, use it only if you really need it.**
 - *mira* now lets you allocate up to 4 GPUs.
 - *longrun* is the qos for long running jobs, up to 7 days.
+- All QOS, except for the *longrun* have a maximum allocation time i.e. MaxWall of 1 day. 
 
 What happens when a job is preempted?
 The job is stopped, reset to PENDING, and restarts from scratch.
@@ -1239,6 +1245,69 @@ The cluster uses three distinct networks with different roles.
 | `/clusterdata` | 100 GbE RoCE (bond1)    | Ethernet 1 GbE (eno2)  | 200 Gbps            |
 | `/home`        | Ethernet 1 GbE (eno3)   | Ethernet 1 GbE (eno2)  | 1 Gbps              |
 | `/cm/shared`   | Ethernet 1 GbE (eno3)   | Ethernet 1 GbE (eno2)  | 1 Gbps              |
+
+
+
+
+
+<br><br>
+
+## Using Claude Code on the cluster
+
+Claude Code is available as a module. It runs under your own account, with your own permissions, and **you are responsible for every action it takes** (just as if you had typed the command yourself).
+
+### Getting started
+
+    module load claude-code
+    cd ~/my_project              # always start Claude inside a project directory
+    claude
+
+- Use the cluster module. Do not install your own copy, and do not run `claude install`.
+  You can ignore the `~/.local/bin` warnings.
+- Sign in with your own account.
+  Never share logins or API keys. Keep `~/.claude` private: it contains your login credentials.
+
+### Data protection
+
+Everything Claude reads (code, logs, data files) is sent to Anthropic for processing.
+**Do not use Claude Code with personal data, health data, confidential or NDA-covered data,
+or export-controlled material.**
+
+### Login node: light work only
+
+- Allowed: editing code, git, writing and fixing job scripts, short tests (under ~1 minute).
+- Not allowed: training, inference, benchmarks, large builds, long data processing.
+  Submit these as Slurm jobs; Claude can write and submit the job script for you.
+- Each user is limited to **2 CPU cores and 8 GB of memory** on the login node, across all
+  their sessions. Processes that exceed the memory limit are killed automatically.
+
+### What Claude is allowed to do
+
+These rules are enforced by the system and cannot be changed or disabled:
+
+- Shell commands run in a sandbox: they can only write inside the directory where you started
+  Claude and its temporary directory. The rest of your home directory is read-only to Claude,
+  and `~/.ssh` is hidden.
+- Create Python virtual environments inside your project directory. Installing packages into
+  `~/.local` or a conda installation in your home must be done in your own terminal.
+- Some download sites (PyPI, Hugging Face, conda) are allowed; other sites require your approval.
+- Claude asks for your approval before every `sbatch` and `scancel`.
+- "Bypass permissions" mode is disabled, and claude.ai connectors (e-mail, drive, etc.)
+  are switched off on the cluster.
+- Always read the commands Claude proposes before approving them, especially anything
+  that deletes or overwrites files in shared directories.
+
+### Inside Slurm jobs
+
+You may run Claude Code inside a job on the compute nodes. It must only use the resources
+allocated to the job. Do not start interactive Claude sessions that hold GPUs while idle.
+
+### Not allowed
+
+- Trying to get around the sandbox, the resource limits or these rules.
+- Using another person's account or credentials.
+
+Violations may lead to processes being terminated and access being suspended.
 
 
 
